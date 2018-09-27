@@ -1,0 +1,173 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Cloud Formation Template - CSYE6225 - FALL 2018",
+	"Parameters": {
+		"VPCName": {
+			"Type": "String"
+		},
+		"SubnetName1": {
+			"Type": "String"
+		},
+		"SubnetName2": {
+			"Type": "String"
+		},
+		"SubnetName3": {
+			"Type": "String"
+		},
+		"IGName": {
+			"Type": "String"
+		},
+		"PubicRouteTableName": {
+			"Type": "String"
+		}
+	},
+	"Resources": {
+		"ourVPC": {
+			"Type": "AWS::EC2::VPC",
+			"Properties": {
+				"CidrBlock": "10.0.0.0/16",
+				"EnableDnsSupport": true,
+				"EnableDnsHostnames": true,
+				"InstanceTenancy": "default",
+				"Tags": [{
+					"Key": "Name",
+					"Value": {
+						"Ref": "VPCName"
+					}
+				}]
+			}
+		},
+		"ourSubnet1": {
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"AvailabilityZone": "us-east-1a",
+				"CidrBlock": "10.0.1.0/24",
+				"MapPublicIpOnLaunch": true,
+				"Tags": [{
+					"Key": "Name",
+					"Value": {
+						"Ref": "SubnetName1"
+					}
+				}],
+				"VpcId": {
+					"Ref": "ourVPC"
+				}
+			}
+		},
+		"ourSubnet2": {
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"AvailabilityZone": "us-east-1b",
+				"CidrBlock": "10.0.2.0/24",
+				"MapPublicIpOnLaunch": true,
+				"VpcId": {
+					"Ref": "ourVPC"
+				},				
+				"Tags": [{
+					"Key": "Name",
+					"Value": {
+						"Ref":"SubnetName2"
+					}
+				}]
+			}
+		},
+		"ourSubnet3": {
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"AvailabilityZone": "us-east-1c",
+				"CidrBlock": "10.0.3.0/24",
+				"MapPublicIpOnLaunch": true,
+				"Tags": [{
+					"Key": "Name",
+					"Value": {
+						"Ref": "SubnetName3"
+					}
+				}],
+				"VpcId": {
+					"Ref": "ourVPC"
+				}
+			}
+		},
+		"ourInternetGateway": {
+			"Type": "AWS::EC2::InternetGateway",
+			"Properties": {
+				"Tags": [{
+					"Key": "Name",
+					"Value": {
+						"Ref": "IGName"
+					}
+				}]
+			}
+		},
+		"ourIGAttachment": {
+			"Type": "AWS::EC2::VPCGatewayAttachment",
+			"Properties": {
+				"InternetGatewayId": {
+					"Ref": "ourInternetGateway"
+				},
+				"VpcId": {
+					"Ref": "ourVPC"
+				}
+			}
+		},
+		"ourPublicRouteTable": {
+			"Type": "AWS::EC2::RouteTable",
+			"Properties": {
+				"VpcId": {
+					"Ref": "ourVPC"
+				},
+				"Tags": [{
+					"Key": "Name",
+					"Value": {
+						"Ref": "PubicRouteTableName"
+					}
+				}]
+			}
+		},
+		"ourSubnet1RouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "ourPublicRouteTable"
+				},
+				"SubnetId": {
+					"Ref": "ourSubnet1"
+				}
+			}
+		},
+		"ourSubnet2RouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "ourPublicRouteTable"
+				},
+				"SubnetId": {
+					"Ref": "ourSubnet2"
+				}
+			}
+		},
+		"ourSubnet3RouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "ourPublicRouteTable"
+				},
+				"SubnetId": {
+					"Ref": "ourSubnet3"
+				}
+			}
+		},
+		"ourPublicRoute": {
+			"Type": "AWS::EC2::Route",
+			"Properties": {
+				"DestinationCidrBlock": "0.0.0.0/0",
+				"GatewayId": {
+					"Ref": "ourInternetGateway"
+				},
+				"RouteTableId": {
+					"Ref": "ourPublicRouteTable"
+				}
+			}
+		}
+	}
+}
