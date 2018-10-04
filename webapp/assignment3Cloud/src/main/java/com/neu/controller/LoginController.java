@@ -1,24 +1,32 @@
 package com.neu.controller;
 
-import java.util.Base64;
-
-import org.springframework.web.bind.annotation.*;
+import com.neu.pojo.User;
+import com.neu.repository.UserRepository;
+import org.json.JSONObject;
 import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
 import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import java.time.LocalDateTime;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
-import org.json.JSONObject;
+import java.util.Base64;
 
 @RestController
 public class LoginController implements CommandLineRunner{
 
     @Autowired
     JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    UserRepository userRepository;
 
     @RequestMapping("/time")
     public ResponseEntity<?> getCurrentTime(HttpServletRequest request)
@@ -39,7 +47,7 @@ public class LoginController implements CommandLineRunner{
             String username = values[0];
             String pass= values[1];
             if(checkIfUserExists(username)){
-                String sql = "SELECT password FROM usertable WHERE username = ?";
+                String sql = "SELECT password FROM user_details WHERE username = ?";
                 String encryptedPassword = (String)jdbcTemplate.queryForObject(
                         sql, new Object[] { username }, String.class);
                 if(encryptedPassword != null) {
@@ -63,46 +71,26 @@ public class LoginController implements CommandLineRunner{
 
     }
 
-    @RequestMapping(value = "/user/register", method = RequestMethod.POST)
-    public String registerUser(@RequestBody String jos)
-    {
-        JSONObject jo = new JSONObject(jos);
-        String name = (String) jo.get("name");
-        String password = (String) jo.get("password");
-        String encryptedPass = hashPassword(password);
-        try {
-            String[] s = new String[2];
-            s[0] = name;
-            s[1]=encryptedPass;
-            if(checkIfUserExists(name)){
-                return name+" "+ "This User is already registered";
-
-            }else{
-                run(s);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return name+" "+ encryptedPass;
-
-
-    }
-
+   
 
 
 
     @Override
     public void run(String... strings) throws Exception {
-
+        User userRegistration=new User();
         System.out.print("Inserting");
+
+
         if(strings != null && strings.length>0) {
             System.out.print(strings[0]);
             System.out.print(strings[1]);
             String usr = strings[0];
             String pass = strings[1];
-            String sql = "INSERT INTO usertable " +
+
+           userRegistration.setUsername(usr);
+           userRegistration.setPassword(pass);
+           userRepository.save(userRegistration);
+           /*String sql = "INSERT INTO usertable " +
                     "(username, password) VALUES (?, ?)";
 
             //jdbcTemplate.execute(sql);
@@ -110,7 +98,7 @@ public class LoginController implements CommandLineRunner{
                     pass
             });
 
-            //jdbcTemplate.batchUpdate("INSERT INTO usertable(username,password) values (usr,pass)");
+            //jdbcTemplate.batchUpdate("INSERT INTO usertable(username,password) values (usr,pass)");*/
         }
         // log.info("Querying for customer records where first_name = 'Josh':");
 
@@ -124,13 +112,13 @@ public class LoginController implements CommandLineRunner{
     }
 
     public boolean checkIfUserExists(String username){
-        String sql = "SELECT count(username) FROM usertable WHERE username = ?";
+        String sql = "SELECT count(username) FROM user_details WHERE username = ?";
 
         int count = (Integer)jdbcTemplate.queryForObject(
                 sql, new Object[] { username }, Integer.class);
         System.out.print(count);
         if(count >0){
-            System.out.print("user exists");
+            System.out.print("User exists");
             return true;
         }
         return false;
@@ -141,10 +129,35 @@ public class LoginController implements CommandLineRunner{
         boolean password_verified = false;
 
         if(null == stored_hash || !stored_hash.startsWith("$2a$"))
-            throw new java.lang.IllegalArgumentException("Invalid hash provided for comparison");
+            throw new IllegalArgumentException("Invalid hash provided for comparison");
 
         password_verified = BCrypt.checkpw(password_plaintext, stored_hash);
 
         return(password_verified);
     }
+
+
+@RequestMapping(value = "/User/register", method = RequestMethod.POST)
+   public String registerUser(@RequestBody String jos)
+   {
+       JSONObject jo = new JSONObject(jos);
+       String name = (String) jo.get("name");
+       String password = (String) jo.get("password");
+       String encryptedPass = hashPassword(password);
+       try {
+           String[] s = new String[2];
+           s[0] = name;
+           s[1]=encryptedPass;
+           if(checkIfUserExists(name)){
+               return name+" "+ "This User is already registered";
+           }else{
+               run(s);
+           }
+       } catch (Exception e) {
+           e.printStackTrace();
+       }
+       return name+" "+ encryptedPass;
+   }
+
+
 }
