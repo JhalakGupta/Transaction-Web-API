@@ -1,0 +1,90 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Cloud Formation Template - CSYE6225 - Creating EC2 instance , Security Groups and Ingress Rules",
+	"Parameters": {
+		"EC2Name": {
+			"Type": "String"
+		},
+		"EC2SecurityGroup": {
+			"Type": "String"
+		},
+		"SubnetId1":{
+			"Type":"String"
+		},
+		"VpcId":{"Type":"String"}
+	},
+	"Resources": {
+		"ourEC2Instance": {
+			"Type": "AWS::EC2::Instance",
+			"Properties": {
+				"InstanceType": "t2.micro",
+				"DisableApiTermination": true,
+				"ImageId" : "ami-9887c6e7",
+				"BlockDeviceMappings" : [
+					{
+						"DeviceName" : "/dev/sda1",
+						"Ebs" : {
+							"VolumeSize" : "16",
+							"VolumeType" : "gp2"
+						}
+					}
+				],
+				"Tags" : [
+					{
+						"Key" : "Name",
+						"Value" : {"Ref":"EC2Name"}
+					}
+				],
+				"SecurityGroupIds" : [{
+					"Ref" : "EC2SecurityGroup"
+
+				}],
+				"SubnetId" : {
+					"Ref":"SubnetId1"
+				}
+
+
+			}
+		},
+		"WebServerSecurityGroup" : {
+			"Type" : "AWS::EC2::SecurityGroup",
+			"Properties" : {
+				"GroupName" : "csye6225-webapp",
+				"GroupDescription" : "Access to ports 22, 80 & 443",
+				"VpcId": {"Ref":"VpcId"},
+				"SecurityGroupIngress" : [ {
+					"IpProtocol" : "tcp",
+					"FromPort" : "22",
+					"ToPort" : "22",
+				"CidrIp" : "0.0.0.0/0" },
+				{
+					"IpProtocol" : "tcp",
+					"FromPort" : "80",
+					"ToPort" : "80",
+				"CidrIp" : "0.0.0.0/0" },
+				{
+					"IpProtocol" : "tcp",
+					"FromPort" : "443",
+					"ToPort" : "443",
+					"CidrIp" : "0.0.0.0/0"
+				} ]
+			}
+		},
+		"DBEC2SecurityGroup": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties" : {
+				"GroupName": "csye6225-rds",
+				"GroupDescription": "Open database for access",
+				"SecurityGroupIngress" : [{
+					"IpProtocol" : "tcp",
+					"FromPort" : "3306",
+					"ToPort" : "3306",
+					"SourceSecurityGroupId" : { "Ref" : "EC2SecurityGroup" }
+				}],
+				"VpcId": {"Ref":"VpcId"}
+			}
+
+		}
+
+	}
+}
