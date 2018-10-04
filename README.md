@@ -13,7 +13,7 @@
 ## For setup and teardown infrastructure using aws cloud-formation refer to Readme in the cloudformation folder
 
 
-#TRAVIS CI build link: 
+# TRAVIS CI build link: 
 1)https://travis-ci.com/Ridhima19/csye6225-fall2018
 2)https://travis-ci.com/JhalakGupta/csye6225-fall2018
 3)https://travis-ci.com/JanhaviPuniani/csye6225-fall2018
