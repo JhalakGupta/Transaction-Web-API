@@ -152,5 +152,135 @@ public class TransactionController {
 
     }
 
+@RequestMapping(value="/delete/{id}", method = RequestMethod.DELETE)
+    public ResponseEntity delete(@PathVariable String id,HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null) {
+            System.out.print("null header ");
+            //return null;
+            return new ResponseEntity<>("Enter basic authentication header! You are not logged in !! ", HttpStatus.UNAUTHORIZED);
+        } else if (authHeader.startsWith("Basic")) {
+            // Authorization: Basic base64credentials
+            String base64Credentials = authHeader.substring("Basic".length()).trim();
+            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
+            String credentials = new String(credDecoded, StandardCharsets.UTF_8);
+            // credentials = username:password
+            final String[] values = credentials.split(":", 2);
+            String username = values[0];
+            String pass = values[1];
+            if (checkIfUserExists(username)) {
+                String sql = "SELECT password FROM user_details WHERE username = ?";
+                String encryptedPassword = (String) jdbcTemplate.queryForObject(
+                        sql, new Object[]{username}, String.class);
+                if (encryptedPassword != null) {
+                    if (!checkPassword(pass, encryptedPassword)) {
+                        return new ResponseEntity<>("UserName and Password does not match !", HttpStatus.UNAUTHORIZED);
+                    } else {
+                        Iterable<Transaction> productList = transactionRepository.findAll();
+                        //find whether a transaction exists with gievn id
+                        boolean isValidId = false;
+                        for (Transaction transactions : productList) {
+                            if (transactions.getId().equals(id)) {
+                                isValidId = true;
+                                break;
+                            }
+                        }
+                        if (!isValidId) {
+                            return new ResponseEntity<>("No transaction found with gievn ID", HttpStatus.NO_CONTENT);
+                        }
+                        //find whether user is authorized
+                        boolean isAuthorized = false;
+                        for (Transaction transactions : productList) {
+                            if (transactions.getUsername().equals(username)) {
+                                isAuthorized = true;
+                                break;
+                            }
+                        }
+                        if (!isAuthorized) {
+                            return new ResponseEntity<>("You are not authorized to delete", HttpStatus.UNAUTHORIZED);
+                        }
+                        for (Transaction transactions : productList) {
+                            if (transactions.getUsername().equals(username) && transactions.getId().equals(id)) {
+                                transactionRepository.deleteById(id);
+                                return new ResponseEntity<>("Transaction deleted successfully", HttpStatus.OK);
+                            }
+                        }
+                    }
+                }
+            }else{
+                return new ResponseEntity<>("User not registered! ", HttpStatus.UNAUTHORIZED);
+            }
+        }
+        return new ResponseEntity<>("Transaction did not delete", HttpStatus.BAD_REQUEST);
+    }
+    @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
+    public ResponseEntity updateProduct(@PathVariable String id, @RequestBody Transaction transaction,HttpServletRequest request){
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null) {
+            System.out.print("null header ");
+            //return null;
+            return new ResponseEntity<>("Enter basic authentication header! You are not logged in !! ", HttpStatus.UNAUTHORIZED);
+        } else if (authHeader.startsWith("Basic")) {
+            // Authorization: Basic base64credentials
+            String base64Credentials = authHeader.substring("Basic".length()).trim();
+            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
+            String credentials = new String(credDecoded, StandardCharsets.UTF_8);
+            // credentials = username:password
+            final String[] values = credentials.split(":", 2);
+            String username = values[0];
+            String pass = values[1];
+            if (checkIfUserExists(username)) {
+                String sql = "SELECT password FROM user_details WHERE username = ?";
+                String encryptedPassword = (String) jdbcTemplate.queryForObject(
+                        sql, new Object[]{username}, String.class);
+                if (encryptedPassword != null) {
+                    if (!checkPassword(pass, encryptedPassword)) {
+                        return new ResponseEntity<>("UserName and Password does not match !", HttpStatus.UNAUTHORIZED);
+                    } else {
+                        Iterable<Transaction> productList = transactionRepository.findAll();
+                        //find whether a transaction exists with given id
+                        boolean isValidId = false;
+                        for (Transaction transactions : productList) {
+                            if (transactions.getId().equals(id)) {
+                                isValidId = true;
+                                break;
+                            }
+                        }
+                        if (!isValidId) {
+                            return new ResponseEntity<>("No transaction found with given ID", HttpStatus.NO_CONTENT);
+                        }
+                        //find whether user is authorized
+                        boolean isAuthorized = false;
+                        for (Transaction transactions : productList) {
+                            if (transactions.getUsername().equals(username)) {
+                                isAuthorized = true;
+                                break;
+                            }
+                        }
+                        if (!isAuthorized) {
+                            return new ResponseEntity<>("You are not authorized to update", HttpStatus.UNAUTHORIZED);
+                        }
+                        for (Transaction transactions : productList) {
+                            if (transactions.getUsername().equals(username) && transactions.getId().equals(id)) {
+                                Transaction storedProduct = transactionRepository.getOne(id);
+                                storedProduct.setDescription(transaction.getDescription());
+                                storedProduct.setAmount(transaction.getAmount());
+                                storedProduct.setCategory(transaction.getCategory());
+                                storedProduct.setMerchant(transaction.getMerchant());
+                                transactionRepository.save(storedProduct);
+                                return new ResponseEntity<>("Transaction updated successfully", HttpStatus.CREATED);
+                            }
+                        }
+                    }
+                }
+            }else{
+                return new ResponseEntity<>("User not registered! ", HttpStatus.UNAUTHORIZED);
+            }
+        }
+        return new ResponseEntity<>("Transaction did not update", HttpStatus.BAD_REQUEST);
+    }
+
+
+
 }
 

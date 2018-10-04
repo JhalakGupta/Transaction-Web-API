@@ -135,4 +135,29 @@ public class LoginController implements CommandLineRunner{
 
         return(password_verified);
     }
+
+
+@RequestMapping(value = "/User/register", method = RequestMethod.POST)
+   public String registerUser(@RequestBody String jos)
+   {
+       JSONObject jo = new JSONObject(jos);
+       String name = (String) jo.get("name");
+       String password = (String) jo.get("password");
+       String encryptedPass = hashPassword(password);
+       try {
+           String[] s = new String[2];
+           s[0] = name;
+           s[1]=encryptedPass;
+           if(checkIfUserExists(name)){
+               return name+" "+ "This User is already registered";
+           }else{
+               run(s);
+           }
+       } catch (Exception e) {
+           e.printStackTrace();
+       }
+       return name+" "+ encryptedPass;
+   }
+
+
 }

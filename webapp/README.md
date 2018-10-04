@@ -10,8 +10,11 @@
 ## Building And Deploying Application
 1) Clone the project from the repository on your local machine. 
 2) Make postgres configuration changes in application.properties file by entering your postgres credentials.
-3) Run the project and hit the url from postman : "localhost:8080/user/register to register a user using POST method.
-4) Go to the postman and hit the url: "localhost:8080/time to view the time using Get method.
+3) Run the project and hit the url from postman : "localhost:8080/User/register to register a user using POST method.
+4) Go to the postman, enter authorization details for the registered user and hit the url: "localhost:8080/transaction using POST method and enter transaction details id, amount, category,  date, description, merchant for the user.
+5) Go to the postman, enter authorization details for the registered user and hit the url: "localhost:8080/transaction using GET  method.
+6) Go to the postman, enter authorization details for the registered user, make changes in the  transaction details id, amount, category, date, description, merchant for the user and hit the url: "localhost:8080/update/{id}" using PUT method.
+7) Go to the postman, enter authorization details for the registered user and hit the url: "localhost:8080/delete/{id}" using DEL method.
 
 ## Instructions on exceuting the test
 1) Open file, login application, and click run button to execute the test.
