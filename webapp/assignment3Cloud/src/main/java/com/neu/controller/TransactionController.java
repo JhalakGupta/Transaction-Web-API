@@ -1,25 +1,36 @@
 package com.neu.controller;
 
 
-import com.neu.pojo.Transaction;
+
+import com.neu.pojo.TransactionAttachments;
+import com.neu.pojo.TransactionDetails;
+import com.neu.repository.TransactionAttachmentsRepository;
 import com.neu.repository.TransactionRepository;
+import com.neu.repository.UserRepository;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.models.Model;
+import com.google.gson.JsonObject;
+
+//import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.simple.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.util.ArrayList;
-import java.util.Base64;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.neu.controller.LoginController.checkPassword;
 
@@ -33,15 +44,21 @@ public class TransactionController {
     TransactionRepository transactionRepository;
 
     @Autowired
+    TransactionAttachmentsRepository transactionAttachmentRepo;
+
+    @Autowired
+    private UserRepository userRepo;
+
+    @Autowired
     JdbcTemplate jdbcTemplate;
 
 
-    @RequestMapping(value = "/transaction", method= RequestMethod.GET, produces = "application/json")
-    public ResponseEntity list(Model model,HttpServletRequest request) {
+    @RequestMapping(value = "/transaction", method = RequestMethod.GET, produces = "application/json")
+    public ResponseEntity list(Model model, HttpServletRequest request) {
 
 
         String authHeader = request.getHeader("Authorization");
-        ArrayList<Transaction> transactionList =new ArrayList<>();
+        ArrayList<TransactionDetails> transactionList = new ArrayList<>();
         if (authHeader == null) {
             System.out.print("You are not logged in ! ");
             //return null;
@@ -57,7 +74,7 @@ public class TransactionController {
             String username = values[0];
             String pass = values[1];
             if (checkIfUserExists(username)) {
-                String sql = "SELECT password FROM user_details WHERE username = ?";
+                String sql = "SELECT password FROM user_info WHERE username = ?";
                 String encryptedPassword = (String) jdbcTemplate.queryForObject(
                         sql, new Object[]{username}, String.class);
                 if (encryptedPassword != null) {
@@ -69,10 +86,10 @@ public class TransactionController {
                     } else {
 
 
-                        Iterable<Transaction> productList = transactionRepository.findAll();
+                        Iterable<TransactionDetails> productList = transactionRepository.findAll();
 
 
-                        for (Transaction transaction : productList) {
+                        for (TransactionDetails transaction : productList) {
                             if (transaction.getUsername().equals(username)) {
                                 transactionList.add(transaction);
                             }
@@ -85,7 +102,7 @@ public class TransactionController {
                     }
                 }
 
-            }else{
+            } else {
                 return new ResponseEntity<>("User not registered! ", HttpStatus.UNAUTHORIZED);
             }
         }
@@ -95,7 +112,7 @@ public class TransactionController {
 
 
     @RequestMapping(value = "/transaction", method = RequestMethod.POST)
-    public ResponseEntity createTransaction(@RequestBody Transaction transaction, HttpServletRequest request) {
+    public ResponseEntity createTransaction(@RequestBody TransactionDetails transaction, HttpServletRequest request) {
         // productService.saveProduct(product);
 
         String authHeader = request.getHeader("Authorization");
@@ -114,7 +131,7 @@ public class TransactionController {
             String username = values[0];
             String pass = values[1];
             if (checkIfUserExists(username)) {
-                String sql = "SELECT password FROM user_details WHERE username = ?";
+                String sql = "SELECT password FROM user_info WHERE username = ?";
                 String encryptedPassword = (String) jdbcTemplate.queryForObject(
                         sql, new Object[]{username}, String.class);
                 if (encryptedPassword != null) {
@@ -129,7 +146,7 @@ public class TransactionController {
                     return new ResponseEntity<>("Transaction saved successfully", HttpStatus.CREATED);
 
                 }
-            }else{
+            } else {
                 return new ResponseEntity<>("User not registered! ", HttpStatus.UNAUTHORIZED);
             }
         }
@@ -138,13 +155,13 @@ public class TransactionController {
     }
 
 
-        public boolean checkIfUserExists(String username){
-        String sql = "SELECT count(username) FROM user_details WHERE username = ?";
+    public boolean checkIfUserExists(String username) {
+        String sql = "SELECT count(username) FROM user_info WHERE username = ?";
 
-        int count = (Integer)jdbcTemplate.queryForObject(
-                sql, new Object[] { username }, Integer.class);
+        int count = (Integer) jdbcTemplate.queryForObject(
+                sql, new Object[]{username}, Integer.class);
         System.out.print(count);
-        if(count >0){
+        if (count > 0) {
             System.out.print("User exists");
             return true;
         }
@@ -152,8 +169,8 @@ public class TransactionController {
 
     }
 
-@RequestMapping(value="/delete/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity delete(@PathVariable String id,HttpServletRequest request) {
+    @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
+    public ResponseEntity delete(@PathVariable String id, HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null) {
             System.out.print("null header ");
@@ -169,17 +186,17 @@ public class TransactionController {
             String username = values[0];
             String pass = values[1];
             if (checkIfUserExists(username)) {
-                String sql = "SELECT password FROM user_details WHERE username = ?";
+                String sql = "SELECT password FROM user_info WHERE username = ?";
                 String encryptedPassword = (String) jdbcTemplate.queryForObject(
                         sql, new Object[]{username}, String.class);
                 if (encryptedPassword != null) {
                     if (!checkPassword(pass, encryptedPassword)) {
                         return new ResponseEntity<>("UserName and Password does not match !", HttpStatus.UNAUTHORIZED);
                     } else {
-                        Iterable<Transaction> productList = transactionRepository.findAll();
+                        Iterable<TransactionDetails> productList = transactionRepository.findAll();
                         //find whether a transaction exists with gievn id
                         boolean isValidId = false;
-                        for (Transaction transactions : productList) {
+                        for (TransactionDetails transactions : productList) {
                             if (transactions.getId().equals(id)) {
                                 isValidId = true;
                                 break;
@@ -190,7 +207,7 @@ public class TransactionController {
                         }
                         //find whether user is authorized
                         boolean isAuthorized = false;
-                        for (Transaction transactions : productList) {
+                        for (TransactionDetails transactions : productList) {
                             if (transactions.getUsername().equals(username)) {
                                 isAuthorized = true;
                                 break;
@@ -199,7 +216,7 @@ public class TransactionController {
                         if (!isAuthorized) {
                             return new ResponseEntity<>("You are not authorized to delete", HttpStatus.UNAUTHORIZED);
                         }
-                        for (Transaction transactions : productList) {
+                        for (TransactionDetails transactions : productList) {
                             if (transactions.getUsername().equals(username) && transactions.getId().equals(id)) {
                                 transactionRepository.deleteById(id);
                                 return new ResponseEntity<>("Transaction deleted successfully", HttpStatus.OK);
@@ -207,14 +224,15 @@ public class TransactionController {
                         }
                     }
                 }
-            }else{
+            } else {
                 return new ResponseEntity<>("User not registered! ", HttpStatus.UNAUTHORIZED);
             }
         }
         return new ResponseEntity<>("Transaction did not delete", HttpStatus.BAD_REQUEST);
     }
+
     @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
-    public ResponseEntity updateProduct(@PathVariable String id, @RequestBody Transaction transaction,HttpServletRequest request){
+    public ResponseEntity updateProduct(@PathVariable String id, @RequestBody TransactionDetails transaction, HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null) {
             System.out.print("null header ");
@@ -230,17 +248,17 @@ public class TransactionController {
             String username = values[0];
             String pass = values[1];
             if (checkIfUserExists(username)) {
-                String sql = "SELECT password FROM user_details WHERE username = ?";
+                String sql = "SELECT password FROM user_info WHERE username = ?";
                 String encryptedPassword = (String) jdbcTemplate.queryForObject(
                         sql, new Object[]{username}, String.class);
                 if (encryptedPassword != null) {
                     if (!checkPassword(pass, encryptedPassword)) {
                         return new ResponseEntity<>("UserName and Password does not match !", HttpStatus.UNAUTHORIZED);
                     } else {
-                        Iterable<Transaction> productList = transactionRepository.findAll();
+                        Iterable<TransactionDetails> productList = transactionRepository.findAll();
                         //find whether a transaction exists with given id
                         boolean isValidId = false;
-                        for (Transaction transactions : productList) {
+                        for (TransactionDetails transactions : productList) {
                             if (transactions.getId().equals(id)) {
                                 isValidId = true;
                                 break;
@@ -251,7 +269,7 @@ public class TransactionController {
                         }
                         //find whether user is authorized
                         boolean isAuthorized = false;
-                        for (Transaction transactions : productList) {
+                        for (TransactionDetails transactions : productList) {
                             if (transactions.getUsername().equals(username)) {
                                 isAuthorized = true;
                                 break;
@@ -260,24 +278,268 @@ public class TransactionController {
                         if (!isAuthorized) {
                             return new ResponseEntity<>("You are not authorized to update", HttpStatus.UNAUTHORIZED);
                         }
-                        for (Transaction transactions : productList) {
+                        for (TransactionDetails transactions : productList) {
                             if (transactions.getUsername().equals(username) && transactions.getId().equals(id)) {
-                                Transaction storedProduct = transactionRepository.getOne(id);
-                                storedProduct.setDescription(transaction.getDescription());
-                                storedProduct.setAmount(transaction.getAmount());
-                                storedProduct.setCategory(transaction.getCategory());
-                                storedProduct.setMerchant(transaction.getMerchant());
+                                TransactionDetails storedProduct = transactionRepository.getOne(id);
+                                storedProduct.setDescription(transactions.getDescription());
+                                storedProduct.setAmount(transactions.getAmount());
+                                storedProduct.setCategory(transactions.getCategory());
+                                storedProduct.setMerchant(transactions.getMerchant());
                                 transactionRepository.save(storedProduct);
                                 return new ResponseEntity<>("Transaction updated successfully", HttpStatus.CREATED);
                             }
                         }
                     }
                 }
-            }else{
+            } else {
                 return new ResponseEntity<>("User not registered! ", HttpStatus.UNAUTHORIZED);
             }
         }
         return new ResponseEntity<>("Transaction did not update", HttpStatus.BAD_REQUEST);
+    }
+
+
+    @RequestMapping(value = "/{id}/attachments", method = RequestMethod.GET, produces = "application/json")
+    public @ResponseBody
+    ResponseEntity<String> getAttachments(@PathVariable(value = "id") String transactionId, HttpServletRequest request) {
+
+
+//        UUID uid = UUID.fromString(transactionId);
+//        TransactionDetails transactionDetail = transactionRepository.findTransactionDetailsByTransactionDetailsId(uid);
+//        List<TransactionAttachments> attachments = transactionAttachmentRepo.findByTransactionDetails(transactionDetail);
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null) {
+            System.out.print("You are not logged in ! ");
+            //return null;
+            return new ResponseEntity<>("Enter basic authentication header! You are not logged in !! ", HttpStatus.UNAUTHORIZED);
+
+        } else if (authHeader.startsWith("Basic")) {
+            // Authorization: Basic base64credentials
+            String base64Credentials = authHeader.substring("Basic".length()).trim();
+            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
+            String credentials = new String(credDecoded, StandardCharsets.UTF_8);
+            // credentials = username:password
+            final String[] values = credentials.split(":", 2);
+            String username = values[0];
+            String pass = values[1];
+            if (checkIfUserExists(username)) {
+                String sql = "SELECT password FROM user_info WHERE username = ?";
+                String encryptedPassword = (String) jdbcTemplate.queryForObject(
+                        sql, new Object[]{username}, String.class);
+                if (encryptedPassword != null) {
+                    if (!checkPassword(pass, encryptedPassword)) {
+                        return new ResponseEntity<>("UserName and Password does not match !", HttpStatus.UNAUTHORIZED);
+
+                    } else {
+
+                        UUID uid = UUID.fromString(transactionId);
+                        TransactionDetails transactionDetail = transactionRepository.findTransactionDetailsByTransactionDetailsId(uid);
+                        if(transactionDetail == null){
+                            return new ResponseEntity<>("No transaction id found!", HttpStatus.BAD_REQUEST);
+                        }
+                        if(transactionDetail.getUsername().equals(username)){
+                            List<TransactionAttachments> attachments = transactionAttachmentRepo.findByTransactionDetails(transactionDetail);
+
+                            JSONArray jsonArray = new JSONArray();
+                            for (TransactionAttachments attachment : attachments) {
+                                JSONObject json = new JSONObject();
+                                json.put("id", attachment.getId().toString());
+                                json.put("url", attachment.getFileName());
+                                jsonArray.add(json);
+                            }
+                            return new ResponseEntity<>(jsonArray.toString(), HttpStatus.OK);
+                        }else{
+                            return new ResponseEntity<>("You are not authorized for this transaction!", HttpStatus.UNAUTHORIZED);
+                        }
+
+                    }
+                }
+
+            }
+        }
+        return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
+
+
+    @RequestMapping(value = "/{id}/attachments", method = RequestMethod.POST, produces = "application/json", consumes = "multipart/form-data")
+    @ResponseBody
+    public ResponseEntity<String> addAttachments(HttpServletRequest request, @PathVariable("id") String id, @RequestParam("file") MultipartFile[] uploadfiles) {
+
+        JsonObject json = new JsonObject();
+        UUID uid = UUID.fromString(id);
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null) {
+            System.out.print("You are not logged in ! ");
+            return new ResponseEntity<>("Enter basic authentication header! You are not logged in !! ", HttpStatus.UNAUTHORIZED);
+
+        } else if (authHeader.startsWith("Basic")) {
+            String base64Credentials = authHeader.substring("Basic".length()).trim();
+            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
+            String credentials = new String(credDecoded, StandardCharsets.UTF_8);
+            // credentials = username:password
+            final String[] values = credentials.split(":", 2);
+            String username = values[0];
+            String pass = values[1];
+            if (checkIfUserExists(username)) {
+                String sql = "SELECT password FROM user_info WHERE username = ?";
+                String encryptedPassword = (String) jdbcTemplate.queryForObject(
+                        sql, new Object[]{username}, String.class);
+                if (encryptedPassword != null) {
+                    if (!checkPassword(pass, encryptedPassword)) {
+                        return new ResponseEntity<>("UserName and Password does not match !", HttpStatus.UNAUTHORIZED);
+
+                    } else {
+                        TransactionDetails transactionDetails = transactionRepository.findTransactionDetailsByTransactionDetailsId(uid);
+                        if(transactionDetails == null){
+                            return new ResponseEntity<>("No transaction id found!", HttpStatus.BAD_REQUEST);
+                        }
+                        if(transactionDetails != null && transactionDetails.getUsername().equals(username)){
+                            String uploadedFileName = Arrays.stream(uploadfiles).map(x -> x.getOriginalFilename()).filter(x -> !StringUtils.isEmpty(x)).collect(Collectors.joining(" , "));
+                            json.addProperty("message", "Saved the file(s)!");
+                            try {
+                                saveUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails);
+                                UploadAttachmentS3BucketController uploadToS3 = new UploadAttachmentS3BucketController();
+                                for (MultipartFile file : uploadfiles) {
+
+                                    String keyName = uploadToS3.uploadFileOnS3(transactionDetails, file);
+                                    if (keyName.equals(null)) {
+                                        json.addProperty("error", "An error occured while uploading files!!");
+                                        return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
+                                    }
+                                }
+
+                                return new ResponseEntity(json.toString(), HttpStatus.OK);
+                            } catch (Exception exp) {
+                                json.addProperty("error", "An error occured while uploading files!!");
+                                return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
+                            }
+                        }else{
+                            return new ResponseEntity("You are  not authorized to add attachment !", HttpStatus.UNAUTHORIZED);
+                        }
+
+                    }
+                }
+            }
+        }
+        return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
+
+
+
+
+
+    private void deleteFileFromLocal(String fileName, String dir)
+    {
+       // String workingDir = System.getProperty("user.dir");
+       // System.out.println("Current working directory : " + workingDir);
+
+      //  String UPLOADED_FOLDER = workingDir+"/";
+
+
+        File file = new File(dir+"/" +fileName);
+
+        if(file.delete())
+        {
+            System.out.println("File deleted successfully");
+        }
+        else
+        {
+            System.out.println("Failed to delete the file");
+        }
+
+    }
+
+    private void updateUploadedFiles(List<MultipartFile> files, String uploadedFileName,
+                                     TransactionDetails transactionDetails,String attachmentid) throws IOException {
+        //Save the uploaded file to this folder
+        //String UPLOADED_FOLDER = "/home/jhalak/Documents/";
+      //  String UPLOADED_FOLDER = "/home/trialss/";
+
+       // String UPLOADED_FOLDER = "/Downloads/demo/assignment3Cloud/";
+
+
+        String workingDir = System.getProperty("user.dir");
+        System.out.println("Current working directory : " + workingDir);
+
+        String UPLOADED_FOLDER = workingDir+"/"+ transactionDetails.getTransactionDetailsId()+"/";
+
+        for (MultipartFile file : files) {
+
+            if (file.isEmpty()) {
+                continue; //next pls
+            }
+
+            byte[] bytes = file.getBytes();
+            Path path = Paths.get(UPLOADED_FOLDER + file.getOriginalFilename());
+            Files.write(path, bytes);
+
+        }
+
+
+        TransactionAttachments transactionAttachments = transactionAttachmentRepo.findTransactionAttachmentsByTransactionAttachmentsId(Integer.parseInt(attachmentid));
+        transactionRepository.save(transactionDetails);
+        transactionAttachments.setFileName(uploadedFileName);
+        transactionAttachments.setTransactionDetails(transactionDetails);
+        transactionAttachmentRepo.save(transactionAttachments);
+    }
+
+
+
+
+
+    private void saveUploadedFiles(List<MultipartFile> files, String uploadedFileName, TransactionDetails transactionDetails) throws IOException {
+        //Save the uploaded file to this folder
+//        String UPLOADED_FOLDER = "/home/jhalak/Documents/";
+
+
+
+        String workingDir = System.getProperty("user.dir");
+        System.out.println("Current working directory : " + workingDir);
+
+        String UPLOADED_FOLDER = workingDir+"/";
+        String dir=UPLOADED_FOLDER+transactionDetails.getTransactionDetailsId();
+
+
+        File theDir = new File(dir);
+
+        if (!theDir.exists()) {
+            System.out.println("creating directory: " + theDir.getName());
+            boolean result = false;
+
+            try{
+                theDir.mkdir();
+                result = true;
+            }
+            catch(SecurityException se){
+                //handle it
+            }
+            if(result) {
+                System.out.println("DIR created");
+            }
+        }
+
+
+
+        for (MultipartFile file : files) {
+
+            if (file.isEmpty()) {
+                continue; //next pls
+            }
+
+            byte[] bytes = file.getBytes();
+            //Path path = Paths.get(UPLOADED_FOLDER + file.getOriginalFilename());
+
+            Path path = Paths.get(dir+"/" + file.getOriginalFilename());
+            Files.write(path, bytes);
+
+        }
+
+
+        TransactionAttachments transactionAttachments = new TransactionAttachments();
+        transactionRepository.save(transactionDetails);
+        transactionAttachments.setFileName(uploadedFileName);
+        transactionAttachments.setTransactionDetails(transactionDetails);
+        transactionAttachmentRepo.save(transactionAttachments);
     }
 
 
