@@ -1,6 +1,7 @@
 package com.neu.controller;
 
-import com.neu.pojo.User;
+
+import com.neu.pojo.UserDetails;
 import com.neu.repository.UserRepository;
 import org.json.JSONObject;
 import org.mindrot.jbcrypt.BCrypt;
@@ -18,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.regex.Pattern;
 
 @RestController
 public class LoginController implements CommandLineRunner{
@@ -47,7 +49,7 @@ public class LoginController implements CommandLineRunner{
             String username = values[0];
             String pass= values[1];
             if(checkIfUserExists(username)){
-                String sql = "SELECT password FROM user_details WHERE username = ?";
+                String sql = "SELECT password FROM user_info WHERE username = ?";
                 String encryptedPassword = (String)jdbcTemplate.queryForObject(
                         sql, new Object[] { username }, String.class);
                 if(encryptedPassword != null) {
@@ -77,7 +79,7 @@ public class LoginController implements CommandLineRunner{
 
     @Override
     public void run(String... strings) throws Exception {
-        User userRegistration=new User();
+        UserDetails userRegistration=new UserDetails();
         System.out.print("Inserting");
 
 
@@ -112,7 +114,7 @@ public class LoginController implements CommandLineRunner{
     }
 
     public boolean checkIfUserExists(String username){
-        String sql = "SELECT count(username) FROM user_details WHERE username = ?";
+        String sql = "SELECT count(username) FROM user_info WHERE username = ?";
 
         int count = (Integer)jdbcTemplate.queryForObject(
                 sql, new Object[] { username }, Integer.class);
@@ -135,4 +137,49 @@ public class LoginController implements CommandLineRunner{
 
         return(password_verified);
     }
+
+
+@RequestMapping(value = "/User/register", method = RequestMethod.POST)
+   public String registerUser(@RequestBody String jos)
+   {
+       JSONObject jo = new JSONObject(jos);
+       String name = (String) jo.get("name");
+       if(isValid(name)) {
+           String password = (String) jo.get("password");
+           String encryptedPass = hashPassword(password);
+           try {
+               String[] s = new String[2];
+               s[0] = name;
+               s[1] = encryptedPass;
+               if (checkIfUserExists(name)) {
+                   return name + " " + "This User is already registered";
+
+               } else {
+                   run(s);
+               }
+
+           } catch (Exception e) {
+               e.printStackTrace();
+           }
+
+           return name + " " + encryptedPass;
+
+       }
+       return "Username not valid";
+   }
+
+    public static boolean isValid(String email)
+    {
+        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\."+
+                "[a-zA-Z0-9_+&*-]+)*@" +
+                "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
+                "A-Z]{2,7}$";
+
+        Pattern pat = Pattern.compile(emailRegex);
+        if (email == null) {
+            return false;
+        }
+        return pat.matcher(email).matches();
+    }
+
 }
