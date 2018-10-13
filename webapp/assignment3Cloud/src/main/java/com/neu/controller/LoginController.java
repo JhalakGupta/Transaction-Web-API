@@ -160,6 +160,38 @@ public class LoginController implements CommandLineRunner{
 
            } catch (Exception e) {
                e.printStackTrace();
+
+           }
+
+           return name + " " + encryptedPass;
+
+       }
+       return "Username not valid";
+   }
+
+    public static boolean isValid(String email)
+    {
+        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\."+
+                "[a-zA-Z0-9_+&*-]+)*@" +
+                "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
+                "A-Z]{2,7}$";
+
+        Pattern pat = Pattern.compile(emailRegex);
+        if (email == null) {
+            return false;
+        }
+        return pat.matcher(email).matches();
+    }
+       String password = (String) jo.get("password");
+       String encryptedPass = hashPassword(password);
+       try {
+           String[] s = new String[2];
+           s[0] = name;
+           s[1]=encryptedPass;
+           if(checkIfUserExists(name)){
+               return name+" "+ "This User is already registered";
+           }else{
+               run(s);
            }
 
            return name + " " + encryptedPass;

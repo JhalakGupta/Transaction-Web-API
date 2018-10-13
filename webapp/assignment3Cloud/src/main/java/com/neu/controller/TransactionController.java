@@ -168,7 +168,6 @@ public class TransactionController {
         return false;
 
     }
-
     @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
     public ResponseEntity delete(@PathVariable String id, HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
@@ -186,7 +185,7 @@ public class TransactionController {
             String username = values[0];
             String pass = values[1];
             if (checkIfUserExists(username)) {
-                String sql = "SELECT password FROM user_info WHERE username = ?";
+                String sql = "SELECT password FROM user_details WHERE username = ?";
                 String encryptedPassword = (String) jdbcTemplate.queryForObject(
                         sql, new Object[]{username}, String.class);
                 if (encryptedPassword != null) {
@@ -542,7 +541,212 @@ public class TransactionController {
         transactionAttachmentRepo.save(transactionAttachments);
     }
 
+@RequestMapping(value = "/{id}/attachments/{idAttachments}", method = RequestMethod.DELETE, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity<String> deleteAttachments(HttpServletRequest request, @PathVariable("idAttachments") String attachmentid, @PathVariable("id") String id) {
 
+        JsonObject json = new JsonObject();
+        DeleteAttachmentS3BucketController deleteFromS3 = new DeleteAttachmentS3BucketController();
+
+        UUID uid = UUID.fromString(id);
+        TransactionDetails transactionDetails = transactionRepository.findTransactionDetailsByTransactionDetailsId(uid);
+
+        if (transactionDetails == null) {
+            json.addProperty("message", "No such transaction found!!");
+            return new ResponseEntity<>(json.toString(), HttpStatus.BAD_REQUEST);
+        }
+
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null) {
+            System.out.print("You are not logged in ! ");
+            return new ResponseEntity<>("Enter basic authentication header! You are not logged in !! ", HttpStatus.UNAUTHORIZED);
+
+        } else if (authHeader.startsWith("Basic")) {
+            String base64Credentials = authHeader.substring("Basic".length()).trim();
+            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
+            String credentials = new String(credDecoded, StandardCharsets.UTF_8);
+            // credentials = username:password
+            final String[] values = credentials.split(":", 2);
+            String username = values[0];
+            String pass = values[1];
+            if (checkIfUserExists(username)) {
+                String sql = "SELECT password FROM user_info WHERE username = ?";
+                String encryptedPassword = (String) jdbcTemplate.queryForObject(
+                        sql, new Object[]{username}, String.class);
+                if (encryptedPassword != null) {
+                    if (!checkPassword(pass, encryptedPassword)) {
+                        return new ResponseEntity<>("UserName and Password does not match !", HttpStatus.UNAUTHORIZED);
+
+                    } else {
+                        if(transactionDetails != null && transactionDetails.getUsername().equals(username)){
+                            try {
+                                int aid = 0;
+                                try {
+                                    aid = Integer.parseInt(attachmentid);
+                                } catch (Exception e) {
+                                    json.addProperty("message", "Attachment Id can only be numbers!!");
+                                    return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
+                                }
+                                TransactionAttachments ta = transactionAttachmentRepo.findTransactionAttachmentsByTransactionAttachmentsId(aid);
+
+                                if (ta == null) {
+                                    json.addProperty("message", "No such attachments with the Id!!");
+                                    return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
+                                }
+                                String path = ta.getFileName();
+                                //Files.deleteIfExists(Paths.get(path));
+                                String workingDir = System.getProperty("user.dir");
+                                System.out.println("Current working directory : " + workingDir);
+
+                                String UPLOADED_FOLDER = workingDir+"/";
+                                String dir=UPLOADED_FOLDER+transactionDetails.getTransactionDetailsId();
+                                deleteFileFromLocal(ta.getFileName(),dir);
+                                String returnmsg = deleteFromS3.deleteFile(transactionDetails, ta.getFileName());
+                                if (returnmsg.equalsIgnoreCase("deleted")) {
+                                    System.out.println("SUCCESSFULLY DELETED FROM S3!!!");
+                                    transactionAttachmentRepo.deleteById(aid);
+                                    transactionRepository.save(transactionDetails);
+                                }
+                            } catch (Exception e) {
+                                System.out.println("" + e.getMessage());
+                            }
+
+                            json.addProperty("message", "Deleted the attachment!");
+                            return new ResponseEntity(json.toString(), HttpStatus.NO_CONTENT);
+                        }else{
+                            return new ResponseEntity<>("You are not authorized to delete!", HttpStatus.UNAUTHORIZED);
+                        }
+
+
+
+                    }
+                }
+            }
+        }
+
+        return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
+
+
+
+    @RequestMapping(value = "/{id}/attachments/{idAttachments}", method=RequestMethod.PUT, produces = "application/json")
+    @ResponseBody
+    public ResponseEntity<String> UpdateAttachments(HttpServletRequest request, @PathVariable("idAttachments") String attachmentid,
+                                                    @PathVariable("id") String id,
+                                                    @RequestParam("file") MultipartFile[] uploadfiles) {
+
+
+
+        JsonObject json = new JsonObject();
+
+        UUID uid = UUID.fromString(id);
+
+        TransactionDetails transactionDetails = transactionRepository.findTransactionDetailsByTransactionDetailsId(uid);
+
+        if (transactionDetails == null) {
+            json.addProperty("message", "No such transaction found!!");
+            return new ResponseEntity<>(json.toString(), HttpStatus.BAD_REQUEST);
+        }
+
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null) {
+            System.out.print("You are not logged in ! ");
+            return new ResponseEntity<>("Enter basic authentication header! You are not logged in !! ", HttpStatus.UNAUTHORIZED);
+
+        } else if (authHeader.startsWith("Basic")) {
+            String base64Credentials = authHeader.substring("Basic".length()).trim();
+            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
+            String credentials = new String(credDecoded, StandardCharsets.UTF_8);
+            // credentials = username:password
+            final String[] values = credentials.split(":", 2);
+            String username = values[0];
+            String pass = values[1];
+            if (checkIfUserExists(username)) {
+                String sql = "SELECT password FROM user_info WHERE username = ?";
+                String encryptedPassword = (String) jdbcTemplate.queryForObject(
+                        sql, new Object[]{username}, String.class);
+                if (encryptedPassword != null) {
+                    if (!checkPassword(pass, encryptedPassword)) {
+                        return new ResponseEntity<>("UserName and Password does not match !", HttpStatus.UNAUTHORIZED);
+
+                    } else {
+                        if(transactionDetails != null && transactionDetails.getUsername().equals(username)){
+                            int aidold = 0;
+                            TransactionAttachments tas =null;
+                            String oldfileName=null;
+                            try {
+
+                                aidold = Integer.parseInt(attachmentid);
+                                tas=transactionAttachmentRepo.findTransactionAttachmentsByTransactionAttachmentsId(Integer.parseInt(attachmentid));
+                                oldfileName=tas.getFileName();
+                            } catch (Exception e) {
+                                json.addProperty("message", "Attachment Id can only be numbers!!");
+                                return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
+                            }
+
+                            transactionDetails = transactionRepository.findTransactionDetailsByTransactionDetailsId(uid);
+                            String uploadedFileName = Arrays.stream(uploadfiles).map(x -> x.getOriginalFilename()).filter(x -> !StringUtils.isEmpty(x)).collect(Collectors.joining(" , "));
+                            json.addProperty("message", "Saved the file(s)!");
+                            DeleteAttachmentS3BucketController deleteFromS3 = new DeleteAttachmentS3BucketController();
+
+
+
+                            try
+                            {
+                                updateUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails,attachmentid);
+                                UploadAttachmentS3BucketController uploadToS3 = new UploadAttachmentS3BucketController();
+                                for (MultipartFile file : uploadfiles) {
+
+                                    String keyName = uploadToS3.uploadFileOnS3(transactionDetails, file);
+                                    if (keyName.equals(null)) {
+                                        json.addProperty("error", "An error occured while uploading files!!");
+                                        return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
+                                    }
+                                }
+
+
+
+                                try {
+                                    String workingDir = System.getProperty("user.dir");
+                                    System.out.println("Current working directory : " + workingDir);
+
+                                    String UPLOADED_FOLDER = workingDir+"/";
+                                    String dir=UPLOADED_FOLDER+transactionDetails.getTransactionDetailsId();
+                                    deleteFileFromLocal(oldfileName,dir);
+                                    String returnmsg = deleteFromS3.deleteFile(transactionDetails, oldfileName);
+                                    if (returnmsg.equalsIgnoreCase("deleted")) {
+                                        System.out.println("SUCCESSFULLY DELETED FROM S3!!!");
+                                        //  transactionAttachmentRepo.deleteById(aidold);
+                                        transactionRepository.save(transactionDetails);
+                                    }
+                                } catch (Exception e) {
+                                    System.out.println("" + e.getMessage());
+                                }
+
+
+
+                                return new ResponseEntity(json.toString(), HttpStatus.OK);
+                            } catch (Exception exp) {
+                                json.addProperty("error", "An error occured while uploading files!!");
+                                return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
+                            }
+                        }else {
+                            return new ResponseEntity<>("You are not authorized to update !! ", HttpStatus.UNAUTHORIZED);
+                        }
+
+
+
+                    }
+
+                }
+
+                return null;
+            }
+
+        }
+
+        return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
 
 }
 
