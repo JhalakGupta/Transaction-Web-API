@@ -168,7 +168,6 @@ public class TransactionController {
         return false;
 
     }
-
     @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
     public ResponseEntity delete(@PathVariable String id, HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
@@ -186,7 +185,8 @@ public class TransactionController {
             String username = values[0];
             String pass = values[1];
             if (checkIfUserExists(username)) {
-                String sql = "SELECT password FROM user_info WHERE username = ?";
+
+                String sql = "SELECT password FROM user_details WHERE username = ?";
                 String encryptedPassword = (String) jdbcTemplate.queryForObject(
                         sql, new Object[]{username}, String.class);
                 if (encryptedPassword != null) {
@@ -217,6 +217,7 @@ public class TransactionController {
                             return new ResponseEntity<>("You are not authorized to delete", HttpStatus.UNAUTHORIZED);
                         }
                         for (TransactionDetails transactions : productList) {
+
                             if (transactions.getUsername().equals(username) && transactions.getId().equals(id)) {
                                 transactionRepository.deleteById(id);
                                 return new ResponseEntity<>("Transaction deleted successfully", HttpStatus.OK);
@@ -285,6 +286,13 @@ public class TransactionController {
                                 storedProduct.setAmount(transactions.getAmount());
                                 storedProduct.setCategory(transactions.getCategory());
                                 storedProduct.setMerchant(transactions.getMerchant());
+                        for (Transaction transactions : productList) {
+                            if (transactions.getUsername().equals(username) && transactions.getId().equals(id)) {
+                                Transaction storedProduct = transactionRepository.getOne(id);
+                                storedProduct.setDescription(transaction.getDescription());
+                                storedProduct.setAmount(transaction.getAmount());
+                                storedProduct.setCategory(transaction.getCategory());
+                                storedProduct.setMerchant(transaction.getMerchant());
                                 transactionRepository.save(storedProduct);
                                 return new ResponseEntity<>("Transaction updated successfully", HttpStatus.CREATED);
                             }
@@ -749,8 +757,6 @@ public class TransactionController {
 
         return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
-
-
 
 
 }
