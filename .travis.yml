@@ -3,9 +3,10 @@ jdk:
   - oraclejdk8
 
 sudo: false
+
 install: true
 
 script:
   - pwd
   - cd webapp
-  - ls -al  
+  - ls -al
