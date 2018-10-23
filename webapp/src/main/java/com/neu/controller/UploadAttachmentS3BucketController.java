@@ -10,6 +10,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.neu.pojo.TransactionDetails;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -17,6 +18,8 @@ import java.io.FileOutputStream;
 import java.util.List;
 
 public class UploadAttachmentS3BucketController {
+
+
 
 
     public String uploadFileOnS3(TransactionDetails transactionDetail, MultipartFile multipartfile){

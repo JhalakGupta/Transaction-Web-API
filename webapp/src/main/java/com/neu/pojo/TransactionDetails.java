@@ -54,12 +54,12 @@ public class TransactionDetails implements Persistable {
     }
 
     public UserDetails getUserDetails() {
-        return userDetails;
+       return userDetails;
     }
 
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
-    }
+        }
 
     public String getMerchant() {
         return merchant;
@@ -113,6 +113,8 @@ public class TransactionDetails implements Persistable {
     public Serializable getId() {
         return transactionDetailsId;
     }
+
+
 
 
     @Override
