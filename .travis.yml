@@ -13,4 +13,3 @@ script:
   - ./mvnw clean package
   - cd target
   - ls -al
- 
