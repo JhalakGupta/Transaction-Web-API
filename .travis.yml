@@ -8,3 +8,5 @@ script:
   - pwd
   - cd webapp
   - ls -al
+  - ./mvnw clean package
+  - ls -al
