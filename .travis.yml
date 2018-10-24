@@ -4,9 +4,9 @@ jdk:
 
 sudo: false
 
-install: true
-
 script:
   - pwd
   - cd webapp
   - ls -al
+  - ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+  - 
