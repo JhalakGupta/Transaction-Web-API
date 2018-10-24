@@ -10,6 +10,6 @@ script:
   - pwd
   - cd webapp
   - ls -al
-  - ./mvnw clean validate compile test package
+  - ./mvnw clean package
   - cd target 
   - ls -al
