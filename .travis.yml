@@ -4,8 +4,6 @@ jdk:
 
 sudo: false
 
-install: true
-
 script:
   - pwd
   - cd webapp
