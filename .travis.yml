@@ -11,3 +11,24 @@ script:
   - ./mvnw clean package -DskipTests
   - cd target 
   - ls -al
+  - cd ../..
+  - pwd
+  - ls -al
+
+#after_success:
+#  - pwd
+#  - ls -al
+#  - mkdir codedeploy_artifact
+#  - cp infrastructure/aws/codedeploy/*.sh .
+#  - cp infrastructure/aws/codedeploy/*.yml .
+#  - zip -r csye6225-web-app-${TRAVIS_JOB_NUMBER}.zip webapp/target/demo-0.0.1-SNAPSHOT.war *.sh *.yml
+#  - ls -al
+#  - mv csye6225-web-app-${TRAVIS_JOB_NUMBER}.zip codedeploy_artifact/
+#  - ls -al
+#  - pwd
+#  - cd codedeploy_artifact
+#  - ls -al
+#  - pwd
+#  - cd ..
+#  - pwd
+#  - ls -al
