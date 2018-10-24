@@ -10,7 +10,7 @@ script:
   - pwd
   - cd webapp
   - ls -al
-  - ./mvnw package
+  - ./mvnw clean package
   - cd target
   - ls -al
  
