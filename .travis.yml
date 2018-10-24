@@ -8,6 +8,6 @@ script:
   - pwd
   - cd webapp
   - ls -al
-  - ./mvnw clean validate compile test package
-  -cd target 
-  -ls -al
+  - ./mvnw clean package -DskipTests
+  - cd target 
+  - ls -al
