@@ -275,8 +275,13 @@
             "ourCodeDeployServiceRole",
             "Arn"
           ]
-        }
+        },
+         "Ec2TagFilters" : [{
+          "Key" : "Name",
+          "Value" : "EC2Name",
+          "Type" : "KEY_AND_VALUE"
+        }]
       }
     }
   }
-}
+ }
