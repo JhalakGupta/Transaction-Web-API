@@ -31,7 +31,10 @@
     },
     "TravisCodeDeployPolicyName":{
       "Type":"String"
-    }
+    },
+    "EC2Name":{
+			"Type":"String"
+		}
   },
   "Resources": {
     "ourCodeDeployServiceRole": {
@@ -278,7 +281,9 @@
         },
          "Ec2TagFilters" : [{
           "Key" : "Name",
-          "Value" : "EC2Name",
+          "Value" : {
+						"Ref": "EC2Name"
+					},
           "Type" : "KEY_AND_VALUE"
         }]
       }
