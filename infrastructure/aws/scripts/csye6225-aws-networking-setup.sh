@@ -1,322 +1,157 @@
-#!/bin/bash
-# create-aws-vpc
-#csye6225-aws-networking-setup.sh
-#variables used in script (these are default variables but can be changed during runtime):
-availabilityZone1="us-east-1a"
-availabilityZone2="us-east-1b"
-availabilityZone3="us-east-1c"
-
-vpcCidrBlock="10.0.0.0/16"
-subNet1CidrBlock="10.0.0.0/24"
-subNet2CidrBlock="10.0.1.0/24"
-subNet3CidrBlock="10.0.2.0/24"
-subNet4CidrBlock="10.0.3.0/24"
-subNet5CidrBlock="10.0.4.0/24"
-subNet6CidrBlock="10.0.5.0/24"
-destinationCidrBlock="0.0.0.0/0"
-
-#get stack name
 STACK_NAME=$1
-echo "Performing setup for stack $STACK_NAME"
+VPC_NAME=${STACK_NAME}-csye6225-vpc
+SUBNET1_NAME=${STACK_NAME}-csye6225-subnet1
+SUBNET2_NAME=${STACK_NAME}-csye6225-subnet2
+SUBNET3_NAME=${STACK_NAME}-csye6225-subnet3
+SUBNET4_NAME=${STACK_NAME}-csye6225-subnet4
+SUBNET5_NAME=${STACK_NAME}-csye6225-subnet5
+SUBNET6_NAME=${STACK_NAME}-csye6225-subnet6
+IG_NAME=${STACK_NAME}-csye6225-InternetGateway
+ROUTE_TABLE_NAME=${STACK_NAME}-csye6225-public-route-table
 
-if [ -z "$STACK_NAME" ]
-  then
-    echo "No argument supplied"
-    echo "The script will now exit"
-    exit 0
+export VPC_ID=$(aws ec2 create-vpc --cidr-block 10.0.0.0/16 --instance-tenancy default --query 'Vpc.VpcId' --output text)
+
+if [ $? -eq 0 ]
+then 
+	aws ec2 create-tags --resources $VPC_ID --tags Key=Name,Value=$VPC_NAME
+	echo "VPC created ${VPC_NAME} successfully!"
+	
+	echo "Creating Subnet1..."
+	export SUBNET1_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --availability-zone "us-east-1a" --cidr-block 10.0.1.0/24 --query 'Subnet.SubnetId' --output text)
+	if [ $? -eq 0 ]
+	then
+		echo "Subnet 1 ${SUBNET1_NAME} Created successfully!"
+		aws ec2 create-tags --resources $SUBNET1_ID --tags Key=Name,Value=$SUBNET1_NAME
+	else
+		echo "Creation of Subnet 1 Failed"
+		exit 1
+	fi
+
+	echo "Creating Subnet2..."
+	export SUBNET2_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --availability-zone "us-east-1b" --cidr-block 10.0.2.0/24 --query 'Subnet.SubnetId' --output text)
+	if [ $? -eq 0 ]
+	then
+		echo "Subnet 2 ${SUBNET2_NAME} Created successfully!"
+		aws ec2 create-tags --resources $SUBNET2_ID --tags Key=Name,Value=$SUBNET2_NAME
+	else
+		echo "Creation of Subnet 2 Failed"
+		exit 1
+	fi
+
+	echo "Creating Subnet3..."
+	export SUBNET3_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --availability-zone "us-east-1c" --cidr-block 10.0.3.0/24 --query 'Subnet.SubnetId' --output text)
+	if [ $? -eq 0 ]
+	then
+		echo "Subnet 3 ${SUBNET3_NAME} Created successfully!"
+		aws ec2 create-tags --resources $SUBNET3_ID --tags Key=Name,Value=$SUBNET3_NAME
+	else
+		echo "Creation of Subnet 3 Failed"
+		exit 1
+	fi
+
+	echo "Creating Subnet4..."
+	export SUBNET4_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --availability-zone "us-east-1a" --cidr-block 10.0.4.0/24 --query 'Subnet.SubnetId' --output text)
+	if [ $? -eq 0 ]
+	then
+		echo "Subnet 4 ${SUBNET4_NAME} Created successfully!"
+		aws ec2 create-tags --resources $SUBNET4_ID --tags Key=Name,Value=$SUBNET4_NAME
+	else
+		echo "Creation of Subnet 4 Failed"
+		exit 1
+	fi
+
+	echo "Creating Subnet5..."
+	export SUBNET5_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --availability-zone "us-east-1b" --cidr-block 10.0.5.0/24 --query 'Subnet.SubnetId' --output text)
+	if [ $? -eq 0 ]
+	then
+		echo "Subnet 5 ${SUBNET5_NAME} Created successfully!"
+		aws ec2 create-tags --resources $SUBNET5_ID --tags Key=Name,Value=$SUBNET5_NAME
+	else
+		echo "Creation of Subnet 5 Failed"
+		exit 1
+	fi
+
+	echo "Creating Subnet6..."
+	export SUBNET6_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --availability-zone "us-east-1c" --cidr-block 10.0.6.0/24 --query 'Subnet.SubnetId' --output text)
+	if [ $? -eq 0 ]
+	then
+		echo "Subnet 6 ${SUBNET6_NAME} Created successfully!"
+		aws ec2 create-tags --resources $SUBNET6_ID --tags Key=Name,Value=$SUBNET6_NAME
+	else
+		echo "Creation of Subnet 6 Failed"
+		exit 1
+	fi
+
+	echo "Creating Internet Gateway"
+	export IG_ID=$(aws ec2 create-internet-gateway --query 'InternetGateway.InternetGatewayId' --output text)
+	echo $IG_ID
+	if [ $? -eq 0 ]
+	then
+		echo "Internet Gateway ${IG_NAME} created successfully!"
+		aws ec2 create-tags --resources $IG_ID --tags Key=Name,Value=$IG_NAME
+	else
+		echo "Creation of Internet Gateway Failed"
+		exit 1
+	fi
+
+	echo "Attaching Internet Gateway to VPC"
+	aws ec2 attach-internet-gateway --vpc-id $VPC_ID --internet-gateway-id $IG_ID
+	if [ $? -eq 0 ]
+	then
+		echo "Internet gateway attached to VPC successfully!"
+	else
+		echo "Internet gateway attached to VPC failed"
+		exit 1
+	fi
+
+	echo "Creating a public route table"
+	export ROUTE_TABLE_ID=$(aws ec2 create-route-table --vpc-id $VPC_ID --query "RouteTable.RouteTableId" --output text)
+	if [ $? -eq 0 ]
+	then
+		echo "Public Route Table ${ROUTE_TABLE_NAME} created successfully!"
+		aws ec2 create-tags --resources $ROUTE_TABLE_ID --tags Key=Name,Value=$ROUTE_TABLE_NAME
+	else
+		echo "Creation of Route Table failed"
+		exit 1
+	fi
+
+	echo "Attaching subnets to Public Route Table"
+	aws ec2 associate-route-table --route-table-id $ROUTE_TABLE_ID --subnet-id $SUBNET1_ID
+	if [ $? -eq 0 ]
+	then
+		echo "Attached Subnet1 ${SUBNET1_NAME} to Public Route Table ${ROUTE_TABLE_NAME} successfully!"
+	else
+		echo "Failed to attach Subnet1 ${SUBNET1_NAME} to Route Table ${ROUTE_TABLE_NAME} failed"
+		exit 1
+	fi
+	aws ec2 associate-route-table --route-table-id $ROUTE_TABLE_ID --subnet-id $SUBNET2_ID
+	if [ $? -eq 0 ]
+	then
+		echo "Attached Subnet2 ${SUBNET2_NAME} to Public Route Table ${ROUTE_TABLE_NAME} successfully!"
+	else
+		echo "Failed to attach Subnet2 ${SUBNET2_NAME} to Route Table ${ROUTE_TABLE_NAME} failed"
+		exit 1
+	fi
+	aws ec2 associate-route-table --route-table-id $ROUTE_TABLE_ID --subnet-id $SUBNET3_ID
+	if [ $? -eq 0 ]
+	then
+		echo "Attached Subnet3 ${SUBNET3_NAME} to Public Route Table ${ROUTE_TABLE_NAME} successfully!"
+	else
+		echo "Failed to attach Subnet3 ${SUBNET3_NAME} to Route Table ${ROUTE_TABLE_NAME} failed"
+		exit 1
+	fi
+
+	echo "Creating a public route in the public route table"
+	aws ec2 create-route --route-table-id $ROUTE_TABLE_ID --destination-cidr-block 0.0.0.0/0 --gateway-id $IG_ID
+	if [ $? -eq 0 ]
+	then
+		echo "Public Route created successfully!"
+	else
+		echo "Creation of Route failed"
+		exit 1
+	fi
+
+else
+	echo "Creation of VPC Failed"
+	exit 1
 fi
-
-vpcName="$STACK_NAME-csye6225-vpc"
-subnetName="$STACK_NAME-subnet"
-gatewayName="$STACK_NAME-csye6225-InternetGateway"
-routeTableName="$STACK_NAME-csye6225-public-route-table"
-
-#create vpc with cidr block /16
-echo "Creating VPC...for stack: $STACK_NAME"
-echo "VPC CIDR block [default: $vpcCidrBlock]"
-
-aws_response=$(aws ec2 create-vpc \
- --cidr-block "$vpcCidrBlock" \
- --output json)
-vpcId=$(echo -e "$aws_response" |  /usr/bin/jq '.Vpc.VpcId' | tr -d '"')
-
-if [ -z "$vpcId" ]
-    then
-        echo "Error creating VPC"
-        exit 0
-fi
-
-#name the vpc
-aws ec2 create-tags \
-  --resources "$vpcId" \
-  --tags Key=Name,Value="$vpcName"
-
-#----------------------------------------------------------------------------------------------------
-#get the avaiablity zone 1
-echo "availability zone 1 in us-east-1 [default: $availabilityZone1]"
-
-#create subnet-1 for vpc with /24 cidr block
-echo "Creating subnet for $availabilityZone1"
-echo "Using Cidr Block for subnet [default: $subNet1CidrBlock] : "
-
-subnet_response=$(aws ec2 create-subnet \
- --cidr-block "$subNet1CidrBlock" \
- --availability-zone "$availabilityZone1" \
- --vpc-id "$vpcId" \
- --output json)
-
-subnetId1=$(echo -e "$subnet_response" |  /usr/bin/jq '.Subnet.SubnetId' | tr -d '"')
-
-if [ -z "$subnetId1" ]
-    then
-        echo "Error creating subnet for $availablityZone1"
-        echo "Now exiting...."
-        exit 0
-fi
-
-#name the subnet-1
-aws ec2 create-tags \
-  --resources "$subnetId1" \
-  --tags Key=Name,Value="$subnetName-1"
-
-# ---------------------------------------------------------------------------------------------------
-
-#create subnet-2 for vpc with /24 cidr block
-echo "Creating 2nd subnet for $availabilityZone1"
-echo " Using Cidr Block for subnet [default: $subNet2CidrBlock]"
-
-subnet_response=$(aws ec2 create-subnet \
- --cidr-block "$subNet2CidrBlock" \
- --availability-zone "$availabilityZone1" \
- --vpc-id "$vpcId" \
- --output json)
-
-subnetId2=$(echo -e "$subnet_response" |  /usr/bin/jq '.Subnet.SubnetId' | tr -d '"')
-
-if [ -z "$subnetId2" ]
-    then
-        echo "Error creating 2nd subnet for $availablityZone1"
-        echo "Now exiting...."
-        exit 0
-fi
-
-#name the subnet-2
-aws ec2 create-tags \
-  --resources "$subnetId2" \
-  --tags Key=Name,Value="$subnetName-2"
-
-#---------------------------------------------------------------------------------------------------------
-
-#get the avaiablity zone 2
-echo "availability zone 2 in us-east-1 [default: $availabilityZone2]"
-
-#create subnet-3 for vpc with /24 cidr block
-echo "Creating subnet for $availabilityZone2"
-echo "Using Cidr Block for subnet  [default: $subNet3CidrBlock] "
-
-
-subnet_response=$(aws ec2 create-subnet \
- --cidr-block "$subNet3CidrBlock" \
- --availability-zone "$availabilityZone2" \
- --vpc-id "$vpcId" \
- --output json)
-subnetId3=$(echo -e "$subnet_response" |  /usr/bin/jq '.Subnet.SubnetId' | tr -d '"')
-
-if [ -z "$subnetId3" ]
-    then
-        echo "Error creating subnet for $availablityZone2"
-        echo "Now exiting...."
-        exit 0
-fi
-
-#name the subnet-3
-aws ec2 create-tags \
-  --resources "$subnetId3" \
-  --tags Key=Name,Value="$subnetName-3"
-#-----------------------------------------------------------------------------------------------------
-
-#create subnet-4 for vpc with /24 cidr block
-echo "Creating subnet for $availabilityZone2"
-echo "Using Cidr Block for subnet  [default: $subNet4CidrBlock]"
-
-subnet_response=$(aws ec2 create-subnet \
- --cidr-block "$subNet4CidrBlock" \
- --availability-zone "$availabilityZone2" \
- --vpc-id "$vpcId" \
- --output json)
-subnetId4=$(echo -e "$subnet_response" |  /usr/bin/jq '.Subnet.SubnetId' | tr -d '"')
-
-if [ -z "$subnetId4" ]
-    then
-        echo "Error creating subnet for $availablityZone2"
-        echo "Now exiting...."
-        exit 0
-fi
-
-#name the subnet-4
-aws ec2 create-tags \
-  --resources "$subnetId4" \
-  --tags Key=Name,Value="$subnetName-4"
-
-#-------------------------------------------------------------------------------------------------------
-
-#get the avaiablity zone 3
-echo "availability zone 3 in us-east-1 [default: $availabilityZone3]"
-
-#create subnet-5 for vpc with /24 cidr block
-echo "Creating subnet 5 for $availabilityZone3"
-echo "Using Cidr Block for subnet  [default: $subNet5CidrBlock]"
-
-subnet_response=$(aws ec2 create-subnet \
- --cidr-block "$subNet5CidrBlock" \
- --availability-zone "$availabilityZone3" \
- --vpc-id "$vpcId" \
- --output json)
-subnetId5=$(echo -e "$subnet_response" |  /usr/bin/jq '.Subnet.SubnetId' | tr -d '"')
-
-if [ -z "$subnetId5" ]
-    then
-        echo "Error creating subnet for $availablityZone3"
-        echo "Now exiting...."
-        exit 0
-fi
-#name the subnet-5
-aws ec2 create-tags \
-  --resources "$subnetId5" \
-  --tags Key=Name,Value="$subnetName-5"
-
-
-#----------------------------------------------------------------------------------------------------
-
-#create subnet-6 for vpc with /24 cidr block
-echo "Creating subnet 5 for $availabilityZone3"
-echo "Using Cidr Block for subnet  [default: $subNet6CidrBlock]"
-
-subnet_response=$(aws ec2 create-subnet \
- --cidr-block "$subNet6CidrBlock" \
- --availability-zone "$availabilityZone3" \
- --vpc-id "$vpcId" \
- --output json)
-subnetId6=$(echo -e "$subnet_response" |  /usr/bin/jq '.Subnet.SubnetId' | tr -d '"')
-
-if [ -z "$subnetId6" ]
-    then
-        echo "Error creating subnet for $availablityZone3"
-        echo "Now exiting...."
-        exit 0
-fi
-#name the subnet-6
-aws ec2 create-tags \
-  --resources "$subnetId6" \
-  --tags Key=Name,Value="$subnetName-6"
-
-#----------------------------------------------------------------------------------------------------
-#create internet gateway
-echo "Creating internet gateway ..."
-gateway_response=$(aws ec2 create-internet-gateway \
- --output json)
-gatewayId=$(echo -e "$gateway_response" |  /usr/bin/jq '.InternetGateway.InternetGatewayId' | tr -d '"')
-if [ -z "$gatewayId" ]
-    then 
-        echo "Gateway creation failed"
-        exit 0
-fi
-
-#name the internet gateway
-
-aws ec2 create-tags \
-  --resources "$gatewayId" \
-  --tags Key=Name,Value="$gatewayName"
-
-#---------------------------------------------------------------------------------------------------
-
-
-#attach gateway to vpc
-echo "Attaching $gatewayName ($gatewayId) gateway to VPC $vpcName" 
-#aws ec2 attach-internet-gateway --vpc-id vpc-07a81ec4c2e7072a1 --internet-gateway-id igw-02d6f4a4ad8f7c661
-attach_response=$(aws ec2 attach-internet-gateway \
- --vpc-id "$vpcId" \
- --internet-gateway-id "$gatewayId")
-
-#----------------------------------------------------------------------------------------------------
-
-#create route table for vpc
-echo "Creating a custom route table for VPC"
-route_table_response=$(aws ec2 create-route-table \
- --vpc-id "$vpcId" \
- --output json)
-routeTableId=$(echo -e "$route_table_response" |  /usr/bin/jq '.RouteTable.RouteTableId' | tr -d '"')
-
-if [ -z "$routeTableId" ]
-    then 
-    echo "Error creating custom route table"
-    echo "Now exiting..."
-    exit 0
-fi
-
-
-#name the route table
-aws ec2 create-tags \
-  --resources "$routeTableId" \
-  --tags Key=Name,Value="$routeTableName"
-
-#add route for the internet gateway
-echo "Adding route to route all traffic to internet gateway"
-route_response=$(aws ec2 create-route \
- --route-table-id "$routeTableId" \
- --destination-cidr-block "$destinationCidrBlock" \
- --gateway-id "$gatewayId")
-
-if [ -z "$route_response" ]
-    then
-        echo "Error adding route to internet gateway"
-        echo "Now exiting..."
-        exit 0
-fi
-
-#------------------------------------------------------------------------------------------------------
-
-
-#associate subnet-1 with route
-echo "Associating subnet $subnetId1 from $availabilityZone1 to custom route"  
-associate_response1=$(aws ec2 associate-route-table \
- --subnet-id "$subnetId1" \
- --route-table-id "$routeTableId")
-
-if [ -z "$associate_response1" ]
-    then
-        echo "Error associating subnet $subnetId3 from $availabilityZone1 to custom route"
-        echo "Now exiting..."
-        exit 0
-fi
-
-#associate subnet-3 with route
-echo "Associating subnet $subnetId3 from $availabilityZone2 to custom route" 
-associate_response2=$(aws ec2 associate-route-table \
- --subnet-id "$subnetId3" \
- --route-table-id "$routeTableId")
-
-if [ -z "$associate_response2" ]
-    then
-        echo "Error associating subnet $subnetId3 from $availabilityZone1 to custom route"
-        echo "Now exiting..."
-        exit 0
-fi
-
-
-
-#associate subnet-3 with route
-echo "Associating subnet $subnetId5 from $availabilityZone3 to custom route" 
-associate_response3=$(aws ec2 associate-route-table \
- --subnet-id "$subnetId5" \
- --route-table-id "$routeTableId")
-
-if [ -z "$associate_response3" ]
-    then
-        echo "Error associating subnet $subnetId5 from $availabilityZone3 to custom route"
-        echo "Now exiting..."
-        exit 0
-fi
-
-echo "VPC created: VPC Id ($vpcId)"
-# end of create-aws-vpc
