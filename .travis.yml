@@ -17,7 +17,7 @@ after_success:
   - cd ..
   - ls -al
   - cp infrastructure/aws/codedeploy/*.sh .
-  - cp infrastructure/aws/codedeploy/*.yml .
+  - cp infrastructure/aws/*.yml .
   - zip -r csye6225-web-app-${TRAVIS_JOB_NUMBER}.zip ./webapp/target/demo-0.0.1-SNAPSHOT.war *.sh *.yml
   - ls -al
   - pwd
