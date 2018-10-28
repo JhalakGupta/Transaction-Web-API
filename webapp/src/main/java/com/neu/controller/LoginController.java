@@ -73,7 +73,7 @@ public class LoginController implements CommandLineRunner{
 
     }
 
-
+   
 
 
 
@@ -89,9 +89,9 @@ public class LoginController implements CommandLineRunner{
             String usr = strings[0];
             String pass = strings[1];
 
-            userRegistration.setUsername(usr);
-            userRegistration.setPassword(pass);
-            userRepository.save(userRegistration);
+           userRegistration.setUsername(usr);
+           userRegistration.setPassword(pass);
+           userRepository.save(userRegistration);
            /*String sql = "INSERT INTO usertable " +
                     "(username, password) VALUES (?, ?)";
 
@@ -139,34 +139,34 @@ public class LoginController implements CommandLineRunner{
     }
 
 
-    @RequestMapping(value = "/User/register", method = RequestMethod.POST)
-    public String registerUser(@RequestBody String jos)
-    {
-        JSONObject jo = new JSONObject(jos);
-        String name = (String) jo.get("name");
-        if(isValid(name)) {
-            String password = (String) jo.get("password");
-            String encryptedPass = hashPassword(password);
-            try {
-                String[] s = new String[2];
-                s[0] = name;
-                s[1] = encryptedPass;
-                if (checkIfUserExists(name)) {
-                    return name + " " + "This User is already registered";
+@RequestMapping(value = "/User/register", method = RequestMethod.POST)
+   public String registerUser(@RequestBody String jos)
+   {
+       JSONObject jo = new JSONObject(jos);
+       String name = (String) jo.get("name");
+       if(isValid(name)) {
+           String password = (String) jo.get("password");
+           String encryptedPass = hashPassword(password);
+           try {
+               String[] s = new String[2];
+               s[0] = name;
+               s[1] = encryptedPass;
+               if (checkIfUserExists(name)) {
+                   return name + " " + "This User is already registered";
 
-                } else {
-                    run(s);
-                }
+               } else {
+                   run(s);
+               }
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+           } catch (Exception e) {
+               e.printStackTrace();
+           }
 
-            return name + " " + encryptedPass;
+           return name + " " + encryptedPass;
 
-        }
-        return "Username not valid";
-    }
+       }
+       return "Username not valid";
+   }
 
     public static boolean isValid(String email)
     {

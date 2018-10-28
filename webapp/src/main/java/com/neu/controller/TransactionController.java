@@ -459,10 +459,10 @@ public class TransactionController {
 
     private void deleteFileFromLocal(String fileName, String dir)
     {
-        // String workingDir = System.getProperty("user.dir");
-        // System.out.println("Current working directory : " + workingDir);
+       // String workingDir = System.getProperty("user.dir");
+       // System.out.println("Current working directory : " + workingDir);
 
-        //  String UPLOADED_FOLDER = workingDir+"/";
+      //  String UPLOADED_FOLDER = workingDir+"/";
 
 
         File file = new File(dir+"/" +fileName);
@@ -482,9 +482,9 @@ public class TransactionController {
                                      TransactionDetails transactionDetails,String attachmentid) throws IOException {
         //Save the uploaded file to this folder
         //String UPLOADED_FOLDER = "/home/jhalak/Documents/";
-        //  String UPLOADED_FOLDER = "/home/trialss/";
+      //  String UPLOADED_FOLDER = "/home/trialss/";
 
-        // String UPLOADED_FOLDER = "/Downloads/demo/assignment3Cloud/";
+       // String UPLOADED_FOLDER = "/Downloads/demo/assignment3Cloud/";
 
 
         String workingDir = System.getProperty("user.dir");
