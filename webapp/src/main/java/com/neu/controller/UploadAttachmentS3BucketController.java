@@ -48,7 +48,7 @@ public class UploadAttachmentS3BucketController {
         for(Bucket bucket : buckets) {
             System.out.println(bucket.getName());
 
-            if(bucket.getName().contains("csye6225"))
+            if(bucket.getName().contains("guptaj.me.csye6225.com"))
             {
                 bucketName=bucket.getName();
                break;
