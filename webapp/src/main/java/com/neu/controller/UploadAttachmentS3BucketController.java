@@ -36,18 +36,20 @@ public class UploadAttachmentS3BucketController {
                // .withCredentials(new InstanceProfileCredentialsProvider(false))
                // .build();
 
-        AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
+        System.out.println("In function UploadFile");
+
+        /*AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
 
         AmazonS3 s3Client = AmazonS3ClientBuilder
                 .standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
                 //.withRegion(Regions.US_EAST_2)
-                .build();
+                .build();*/
 
-       /* InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider(true);
+       InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider(true);
 
-        AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withCredentials(provider).withRegion(Regions.US_EAST_1).build();*/
-
+        AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withCredentials(provider).withRegion(Regions.US_EAST_1).build();
+        System.out.println("InstanceProfileCreated");
         String bucketName=null;
 
 
