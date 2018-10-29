@@ -4,7 +4,9 @@ package com.neu.controller;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
@@ -34,18 +36,26 @@ public class UploadAttachmentS3BucketController {
                // .withCredentials(new InstanceProfileCredentialsProvider(false))
                // .build();
 
-        AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
+        /*AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
 
         AmazonS3 s3Client = AmazonS3ClientBuilder
                 .standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
                 //.withRegion(Regions.US_EAST_2)
-                .build();
+                .build();*/
+
+        InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider(true);
+
+        AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withCredentials(provider).withRegion(Regions.US_EAST_1).build();
 
         String bucketName=null;
 
+
+        System.out.println("Before the Bucket List for loop");
+
         List<Bucket> buckets = s3Client.listBuckets();
         for(Bucket bucket : buckets) {
+            System.out.println("In the bucket list loop");
             System.out.println(bucket.getName());
 
             if(bucket.getName().contains("guptaj.me.csye6225.com"))

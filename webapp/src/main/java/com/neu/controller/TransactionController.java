@@ -408,12 +408,12 @@ public class TransactionController {
                             try {
 
                                 String keyValue = environment.getProperty("spring.profiles.active");
-                                System.out.println(keyValue);
+                                System.out.println("hi"+keyValue);
                                 //saveUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails);
                                 if(keyValue != null && keyValue.equals("aws")){
                                     UploadAttachmentS3BucketController uploadToS3 = new UploadAttachmentS3BucketController();
                                     for (MultipartFile file : uploadfiles) {
-
+                                        System.out.println("Enter For Loop");
                                         String keyName = uploadToS3.uploadFileOnS3(transactionDetails, file);
                                         if (keyName.equals(null)) {
                                             json.addProperty("error", "An error occured while JJJJ uploading files!!");
