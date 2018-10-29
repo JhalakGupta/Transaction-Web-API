@@ -61,7 +61,7 @@ public class UploadAttachmentS3BucketController {
             File filename = convertFromMultipart(multipartfile);
             s3Client.putObject(new PutObjectRequest(bucketName, transactionDetail.getTransactionDetailsId().toString()+"/"+filename.getName(),filename));
             return transactionDetail.getTransactionDetailsId().toString()+filename.getName();
-        }catch(AmazonServiceException ase){
+        }catch(AmazonServiceException ase) {
             System.out.println("bucket name: " + bucketName);
             System.out.println("Request made to s3 bucket failed");
             System.out.println("Error Message:    " + ase.getMessage());
@@ -70,8 +70,9 @@ public class UploadAttachmentS3BucketController {
             System.out.println("Error Type:       " + ase.getErrorType());
             System.out.println("Request ID:       " + ase.getRequestId());
             return null;
+
         } catch(Exception e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
             return null;
         }
     }
