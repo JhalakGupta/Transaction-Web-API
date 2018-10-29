@@ -43,7 +43,6 @@ public class UploadAttachmentS3BucketController {
        AmazonS3 s3Client = AmazonS3ClientBuilder
                 .standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                //.withRegion(Regions.US_EAST_2)
                 .build();
 
        /*InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider
@@ -85,7 +84,7 @@ public class UploadAttachmentS3BucketController {
             return null;
 
         } catch(Exception e) {
-            System.out.println(e.getMessage());
+            System.out.println("----------Stack Trace------\n"+e.getStackTrace());
             return null;
         }
     }
