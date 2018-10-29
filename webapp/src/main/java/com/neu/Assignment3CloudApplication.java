@@ -20,13 +20,13 @@ import java.util.Properties;
 
 
 @SpringBootApplication
-public class Assignment3CloudApplication extends SpringBootServletInitializer {
+public class Assignment3CloudApplication  {
 
 
-    @Override
+   /* @Override extends SpringBootServletInitializer
     protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
         return application.sources(Assignment3CloudApplication.class).properties(getRemoteConnection());
-    }
+    }*/
 
 
     public static void main(String[] args)
@@ -36,7 +36,7 @@ public class Assignment3CloudApplication extends SpringBootServletInitializer {
     }
 
 
-    private static Properties getRemoteConnection() {
+    /*private static Properties getRemoteConnection() {
         if (System.getProperty("RDS_HOSTNAME") != null) {
             try {
                 Class.forName("org.postgresql.Driver");
@@ -61,6 +61,6 @@ public class Assignment3CloudApplication extends SpringBootServletInitializer {
             }
         }
         return null;
-    }
+    }*/
 
 }
