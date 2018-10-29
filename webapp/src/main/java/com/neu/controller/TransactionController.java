@@ -439,6 +439,7 @@ public class TransactionController {
 
                                 return new ResponseEntity(json.toString(), HttpStatus.OK);
                             } catch (Exception exp) {
+                                System.out.println(exp);
                                 json.addProperty("error", "An error occured while uploading files!!");
                                 return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
                             }

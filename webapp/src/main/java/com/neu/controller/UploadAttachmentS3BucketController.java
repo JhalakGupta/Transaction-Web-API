@@ -36,6 +36,7 @@ public class UploadAttachmentS3BucketController {
         AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
 
         System.out.println("A" + credentials.toString());
+
         AmazonS3 s3Client = AmazonS3ClientBuilder
                 .standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
