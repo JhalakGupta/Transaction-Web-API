@@ -58,7 +58,6 @@ public class UploadAttachmentS3BucketController {
         for (Bucket bucket : buckets) {
             System.out.println("In the bucket list loop");
             System.out.println(bucket.getName());
-
             if (bucket.getName().contains("guptaj.me.csye6225.com")) {
                 bucketName = bucket.getName();
                 break;
