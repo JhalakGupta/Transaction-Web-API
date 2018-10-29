@@ -61,7 +61,7 @@ public class UploadAttachmentS3BucketController {
         for (Bucket bucket : buckets) {
             System.out.println("In the bucket list loop");
             System.out.println(bucket.getName());
-            if (bucket.getName().contains("guptaj.me.csye6225.com")) {
+            if (bucket.getName().equals("guptaj.me.csye6225.com")) {
                 bucketName = bucket.getName();
                 break;
             }
@@ -70,10 +70,12 @@ public class UploadAttachmentS3BucketController {
         try {
 
             System.out.println("Uploading file to s3 bucket" + bucketName);
-            File filename = convertFromMultipart(multipartfile);
+            objectMetadata.setContentType(multipartfile.getContentType());
+            //File filename = convertFromMultipart(multipartfile);
+            System.out.println(transactionDetail.getId()+"\n"+multipartfile.getOriginalFilename());
             s3Client.putObject(new PutObjectRequest(bucketName, transactionDetail.getTransactionDetailsId().toString() + "/" +
                     multipartfile.getOriginalFilename(), multipartfile.getInputStream(), objectMetadata));
-            return transactionDetail.getTransactionDetailsId().toString() + filename.getName();
+            return transactionDetail.getTransactionDetailsId().toString() + multipartfile.getOriginalFilename();
         } catch (AmazonServiceException ase) {
             System.out.println("bucket name: " + bucketName);
             System.out.println("Request made to s3 bucket failed");
