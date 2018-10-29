@@ -416,7 +416,7 @@ public class TransactionController {
 
                                         String keyName = uploadToS3.uploadFileOnS3(transactionDetails, file);
                                         if (keyName.equals(null)) {
-                                            json.addProperty("error", "An error occured while uploading files!!");
+                                            json.addProperty("error", "An error occured while JJJJ uploading files!!");
                                             return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
                                         }
                                     }
