@@ -4,7 +4,9 @@ package com.neu.controller;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
@@ -33,20 +35,20 @@ public class UploadAttachmentS3BucketController {
 
         System.out.println("In function UploadFile");
 
-        AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
+//        AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
+//
+//        System.out.println("A" + credentials.toString());
+//
+//        AmazonS3 s3Client = AmazonS3ClientBuilder
+//                .standard()
+//                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+//                .build();
 
-        System.out.println("A" + credentials.toString());
-
-        AmazonS3 s3Client = AmazonS3ClientBuilder
-                .standard()
-                .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                .build();
-
-       /*InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider
+       InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider
                (true);
 
         AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withCredentials(provider).withRegion(Regions.US_EAST_1).build();
-        System.out.println("InstanceProfileCreated");*/
+        System.out.println("InstanceProfileCreated");
         String bucketName = null;
 
 
