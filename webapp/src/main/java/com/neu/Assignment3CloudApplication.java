@@ -20,7 +20,7 @@ import java.util.Properties;
 
 
 @SpringBootApplication
-public class Assignment3CloudApplication  {
+public class Assignment3CloudApplication extends SpringBootServletInitializer{
 
 
    /* @Override extends SpringBootServletInitializer
@@ -33,6 +33,7 @@ public class Assignment3CloudApplication  {
     {
 
         SpringApplication.run(Assignment3CloudApplication.class, args);
+        System.out.println("jhalak");
     }
 
 
