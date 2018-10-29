@@ -10,6 +10,7 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.neu.pojo.TransactionDetails;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +21,8 @@ import java.util.List;
 
 public class UploadAttachmentS3BucketController {
 
+
+    ObjectMetadata objectMetadata = new ObjectMetadata();
 
     public String uploadFileOnS3(TransactionDetails transactionDetail, MultipartFile multipartfile) {
 
@@ -66,9 +69,10 @@ public class UploadAttachmentS3BucketController {
         }
         try {
 
-            System.out.println("Uploading file to s3 bucket");
+            System.out.println("Uploading file to s3 bucket" + bucketName);
             File filename = convertFromMultipart(multipartfile);
-            s3Client.putObject(new PutObjectRequest(bucketName, transactionDetail.getTransactionDetailsId().toString() + "/" + filename.getName(), filename));
+            s3Client.putObject(new PutObjectRequest(bucketName, transactionDetail.getTransactionDetailsId().toString() + "/" +
+                    multipartfile.getOriginalFilename(), multipartfile.getInputStream(), objectMetadata));
             return transactionDetail.getTransactionDetailsId().toString() + filename.getName();
         } catch (AmazonServiceException ase) {
             System.out.println("bucket name: " + bucketName);
@@ -97,7 +101,8 @@ public class UploadAttachmentS3BucketController {
     public File convertFromMultipart(MultipartFile file) throws Exception {
         File convFile = new File(file.getOriginalFilename());
         System.out.println("jhalak");
-        convFile.createNewFile();
+        //convFile.createNewFile();
+        objectMetadata.setContentType(file.getContentType());
         System.out.println("janhavi");
         FileOutputStream fos = new FileOutputStream(convFile);
         fos.write(file.getBytes());
