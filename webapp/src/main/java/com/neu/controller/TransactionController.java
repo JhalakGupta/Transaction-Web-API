@@ -410,7 +410,7 @@ public class TransactionController {
                                 String keyValue = environment.getProperty("spring.profiles.active");
                                 System.out.println(keyValue);
                                 //saveUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails);
-                                if(keyValue != null && keyValue.equals("dev")){
+                                if(keyValue != null && keyValue.equals("aws")){
                                     UploadAttachmentS3BucketController uploadToS3 = new UploadAttachmentS3BucketController();
                                     for (MultipartFile file : uploadfiles) {
 
@@ -638,7 +638,7 @@ public class TransactionController {
                                     deleteFileFromLocal(ta.getFileName(), dir);
                                     transactionAttachmentRepo.deleteById(aid);
                                     transactionRepository.save(transactionDetails);
-                                }else if(keyValue != null && keyValue.equals("dev")){
+                                }else if(keyValue != null && keyValue.equals("aws")){
                                     String returnmsg = deleteFromS3.deleteFile(transactionDetails, ta.getFileName());
                                     if (returnmsg.equalsIgnoreCase("deleted")) {
                                         System.out.println("SUCCESSFULLY DELETED FROM S3!!!");
@@ -739,7 +739,7 @@ public class TransactionController {
                                 if(keyValue != null && keyValue.equals("default")) {
                                     updateUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails, attachmentid);
 
-                                }else if(keyValue != null && keyValue.equals("dev")){
+                                }else if(keyValue != null && keyValue.equals("aws")){
                                     UploadAttachmentS3BucketController uploadToS3 = new UploadAttachmentS3BucketController();
                                     for (MultipartFile file : uploadfiles) {
 
