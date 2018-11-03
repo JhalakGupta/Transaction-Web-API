@@ -739,6 +739,7 @@ public class TransactionController {
 
                             try {
                                 String keyValue = environment.getProperty("spring.profiles.active");
+                                System.out.println("The profile is:"+ keyValue);
                                 if(keyValue != null && keyValue.equals("default")) {
                                     updateUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails, attachmentid);
 
