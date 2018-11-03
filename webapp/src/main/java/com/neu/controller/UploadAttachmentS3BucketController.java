@@ -29,12 +29,6 @@ public class UploadAttachmentS3BucketController {
         //String bucketName = System.getProperty("bucket.name");
         //System.out.println("bucket name is :" + System.getProperty("bucket.name"));
 
-        /*Assigns Temporary credentials to IAM role
-         * InstanceProfileCredentialsProvider : false does not refresh the credentials
-         */
-        //  AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
-        // .withCredentials(new InstanceProfileCredentialsProvider(false))
-        // .build();
 
         System.out.println("In function UploadFile");
 

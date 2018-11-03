@@ -29,21 +29,19 @@ public class DeleteAttachmentS3BucketController {
         /*Assigns Temporary credentials to IAM role
          * InstanceProfileCredentialsProvider : false does not refresh the credentials
          */
-        /*AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
+        AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
 
         AmazonS3 s3Client = AmazonS3ClientBuilder
                 .standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                .build();*/
+                .build();
 
 
-        System.out.println("In function deleting");
-        
-        InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider
+        /*InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider
                 (true);
 
         AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withCredentials(provider).withRegion(Regions.US_EAST_1).build();
-        System.out.println("InstanceProfileCreated");
+        System.out.println("InstanceProfileCreated");*/
         String bucketName = null;
 
 
@@ -74,7 +72,7 @@ public class DeleteAttachmentS3BucketController {
             System.out.println("Request ID:       " + ase.getRequestId());
             return null;
         } catch(Exception e) {
-            e.printStackTrace();
+            System.out.println("----------Stack Trace------\n" + e.getStackTrace());
             return null;
         }
     }
