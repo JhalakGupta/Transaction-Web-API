@@ -29,8 +29,9 @@ public class DeleteAttachmentS3BucketController {
         /*Assigns Temporary credentials to IAM role
          * InstanceProfileCredentialsProvider : false does not refresh the credentials
          */
-        AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
         System.out.println("IN delete method");
+        AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
+
         AmazonS3 s3Client = AmazonS3ClientBuilder
                 .standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
@@ -53,6 +54,7 @@ public class DeleteAttachmentS3BucketController {
             if(bucket.getName().equals("guptaj.me.csye6225.com"))
             {
                 bucketName=bucket.getName();
+                System.out.println("BUCKET FOUND");
                 break;
             }
 
