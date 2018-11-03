@@ -37,6 +37,8 @@ public class DeleteAttachmentS3BucketController {
                 .build();*/
 
 
+        System.out.println("In function deleting");
+        
         InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider
                 (true);
 
