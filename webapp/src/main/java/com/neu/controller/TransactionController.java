@@ -773,7 +773,7 @@ public class TransactionController {
                                     if(keyValue != null && keyValue.equals("default")) {
                                         deleteFileFromLocal(oldfileName, dir);
                                         transactionRepository.save(transactionDetails);
-                                    }else if(keyValue != null && keyValue.equals("dev")) {
+                                    }else if(keyValue != null && keyValue.equals("aws")) {
                                         String returnmsg = deleteFromS3.deleteFile(transactionDetails, oldfileName);
                                         if (returnmsg.equalsIgnoreCase("deleted")) {
                                             System.out.println("SUCCESSFULLY DELETED FROM S3!!!");
