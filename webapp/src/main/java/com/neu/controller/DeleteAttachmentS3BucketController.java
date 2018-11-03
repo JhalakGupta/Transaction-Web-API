@@ -30,13 +30,13 @@ public class DeleteAttachmentS3BucketController {
          * InstanceProfileCredentialsProvider : false does not refresh the credentials
          */
         AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
-
+        System.out.println("IN delete method");
         AmazonS3 s3Client = AmazonS3ClientBuilder
                 .standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
                 .build();
 
-
+        System.out.println("IN delete after build");
         /*InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider
                 (true);
 

@@ -640,7 +640,9 @@ public class TransactionController {
                                     transactionAttachmentRepo.deleteById(aid);
                                     transactionRepository.save(transactionDetails);
                                 }else if(keyValue != null && keyValue.equals("aws")){
+                                    System.out.println("IN delete controller");
                                     String returnmsg = deleteFromS3.deleteFile(transactionDetails, ta.getFileName());
+
                                     if (returnmsg.equalsIgnoreCase("deleted")) {
                                         System.out.println("SUCCESSFULLY DELETED FROM S3!!!");
                                         transactionAttachmentRepo.deleteById(aid);
