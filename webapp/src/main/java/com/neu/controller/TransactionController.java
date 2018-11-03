@@ -427,7 +427,7 @@ public class TransactionController {
                                     transactionAttachments.setTransactionDetails(transactionDetails);
                                     transactionAttachmentRepo.save(transactionAttachments);
 
-                                }else if(keyValue != null && keyValue.equals("default")){
+                                }else if(keyValue != null && keyValue.equals("dev")){
                                     saveUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails);
                                 }
                                 else
@@ -635,7 +635,7 @@ public class TransactionController {
                                 String UPLOADED_FOLDER = workingDir + "/";
                                 String dir = UPLOADED_FOLDER + transactionDetails.getTransactionDetailsId();
                                 String keyValue = environment.getProperty("spring.profiles.active");
-                                if(keyValue != null && keyValue.equals("default")){
+                                if(keyValue != null && keyValue.equals("dev")){
                                     deleteFileFromLocal(ta.getFileName(), dir);
                                     transactionAttachmentRepo.deleteById(aid);
                                     transactionRepository.save(transactionDetails);
@@ -740,7 +740,7 @@ public class TransactionController {
                             try {
                                 String keyValue = environment.getProperty("spring.profiles.active");
                                 System.out.println("The profile is:"+ keyValue);
-                                if(keyValue != null && keyValue.equals("default")) {
+                                if(keyValue != null && keyValue.equals("dev")) {
                                     updateUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails, attachmentid);
 
                                 }else if(keyValue != null && keyValue.equals("aws")){
@@ -770,7 +770,7 @@ public class TransactionController {
 
                                     String UPLOADED_FOLDER = workingDir + "/";
                                     String dir = UPLOADED_FOLDER + transactionDetails.getTransactionDetailsId();
-                                    if(keyValue != null && keyValue.equals("default")) {
+                                    if(keyValue != null && keyValue.equals("dev")) {
                                         deleteFileFromLocal(oldfileName, dir);
                                         transactionRepository.save(transactionDetails);
                                     }else if(keyValue != null && keyValue.equals("aws")) {
