@@ -4,16 +4,22 @@ package com.neu.controller;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.neu.pojo.TransactionDetails;
 
 import java.util.List;
 
 public class DeleteAttachmentS3BucketController {
+
+    ObjectMetadata objectMetadata = new ObjectMetadata();
+
 
     public String deleteFile(TransactionDetails transactionDetail, String keyName){
 
@@ -23,20 +29,28 @@ public class DeleteAttachmentS3BucketController {
         /*Assigns Temporary credentials to IAM role
          * InstanceProfileCredentialsProvider : false does not refresh the credentials
          */
-        AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
+        /*AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
 
         AmazonS3 s3Client = AmazonS3ClientBuilder
                 .standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                .build();
+                .build();*/
 
-        String bucketName=null;
+
+        InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider
+                (true);
+
+        AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withCredentials(provider).withRegion(Regions.US_EAST_1).build();
+        System.out.println("InstanceProfileCreated");
+        String bucketName = null;
+
+
 
         List<Bucket> buckets = s3Client.listBuckets();
         for(Bucket bucket : buckets) {
             System.out.println(bucket.getName());
 
-            if(bucket.getName().contains("guptaj.me.csye6225.com"))
+            if(bucket.getName().equals("guptaj.me.csye6225.com"))
             {
                 bucketName=bucket.getName();
                 break;
