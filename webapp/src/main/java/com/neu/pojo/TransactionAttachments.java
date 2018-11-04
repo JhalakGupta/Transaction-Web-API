@@ -1,6 +1,7 @@
 package com.neu.pojo;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.domain.Persistable;
 
 import javax.persistence.*;
@@ -22,6 +23,7 @@ public class TransactionAttachments  implements Persistable {
     @Column
     private String fileName;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name="transactionDetailsId")
     private TransactionDetails transactionDetails;

@@ -408,15 +408,15 @@ public class TransactionController {
                             try {
 
                                 String keyValue = environment.getProperty("spring.profiles.active");
-                                System.out.println(keyValue);
+                                System.out.println("hi"+keyValue);
                                 //saveUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails);
-                                if(keyValue != null && keyValue.equals("dev")){
+                                if(keyValue != null && keyValue.equals("aws")){
                                     UploadAttachmentS3BucketController uploadToS3 = new UploadAttachmentS3BucketController();
                                     for (MultipartFile file : uploadfiles) {
-
+                                        System.out.println("Enter For Loop");
                                         String keyName = uploadToS3.uploadFileOnS3(transactionDetails, file);
                                         if (keyName.equals(null)) {
-                                            json.addProperty("error", "An error occured while uploading files!!");
+                                            json.addProperty("error", "An error occured while JJJJ uploading files!!");
                                             return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
                                         }
                                     }
@@ -427,7 +427,7 @@ public class TransactionController {
                                     transactionAttachments.setTransactionDetails(transactionDetails);
                                     transactionAttachmentRepo.save(transactionAttachments);
 
-                                }else if(keyValue != null && keyValue.equals("default")){
+                                }else if(keyValue != null && keyValue.equals("dev")){
                                     saveUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails);
                                 }
                                 else
@@ -439,6 +439,7 @@ public class TransactionController {
 
                                 return new ResponseEntity(json.toString(), HttpStatus.OK);
                             } catch (Exception exp) {
+                                System.out.println(exp);
                                 json.addProperty("error", "An error occured while uploading files!!");
                                 return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
                             }
@@ -459,10 +460,10 @@ public class TransactionController {
 
     private void deleteFileFromLocal(String fileName, String dir)
     {
-        // String workingDir = System.getProperty("user.dir");
-        // System.out.println("Current working directory : " + workingDir);
+       // String workingDir = System.getProperty("user.dir");
+       // System.out.println("Current working directory : " + workingDir);
 
-        //  String UPLOADED_FOLDER = workingDir+"/";
+      //  String UPLOADED_FOLDER = workingDir+"/";
 
 
         File file = new File(dir+"/" +fileName);
@@ -482,9 +483,9 @@ public class TransactionController {
                                      TransactionDetails transactionDetails,String attachmentid) throws IOException {
         //Save the uploaded file to this folder
         //String UPLOADED_FOLDER = "/home/jhalak/Documents/";
-        //  String UPLOADED_FOLDER = "/home/trialss/";
+      //  String UPLOADED_FOLDER = "/home/trialss/";
 
-        // String UPLOADED_FOLDER = "/Downloads/demo/assignment3Cloud/";
+       // String UPLOADED_FOLDER = "/Downloads/demo/assignment3Cloud/";
 
 
         String workingDir = System.getProperty("user.dir");
@@ -634,12 +635,14 @@ public class TransactionController {
                                 String UPLOADED_FOLDER = workingDir + "/";
                                 String dir = UPLOADED_FOLDER + transactionDetails.getTransactionDetailsId();
                                 String keyValue = environment.getProperty("spring.profiles.active");
-                                if(keyValue != null && keyValue.equals("default")){
+                                if(keyValue != null && keyValue.equals("dev")){
                                     deleteFileFromLocal(ta.getFileName(), dir);
                                     transactionAttachmentRepo.deleteById(aid);
                                     transactionRepository.save(transactionDetails);
-                                }else if(keyValue != null && keyValue.equals("dev")){
+                                }else if(keyValue != null && keyValue.equals("aws")){
+                                    System.out.println("IN delete controller");
                                     String returnmsg = deleteFromS3.deleteFile(transactionDetails, ta.getFileName());
+
                                     if (returnmsg.equalsIgnoreCase("deleted")) {
                                         System.out.println("SUCCESSFULLY DELETED FROM S3!!!");
                                         transactionAttachmentRepo.deleteById(aid);
@@ -736,10 +739,11 @@ public class TransactionController {
 
                             try {
                                 String keyValue = environment.getProperty("spring.profiles.active");
-                                if(keyValue != null && keyValue.equals("default")) {
+                                System.out.println("The profile is:"+ keyValue);
+                                if(keyValue != null && keyValue.equals("dev")) {
                                     updateUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails, attachmentid);
 
-                                }else if(keyValue != null && keyValue.equals("dev")){
+                                }else if(keyValue != null && keyValue.equals("aws")){
                                     UploadAttachmentS3BucketController uploadToS3 = new UploadAttachmentS3BucketController();
                                     for (MultipartFile file : uploadfiles) {
 
@@ -766,10 +770,10 @@ public class TransactionController {
 
                                     String UPLOADED_FOLDER = workingDir + "/";
                                     String dir = UPLOADED_FOLDER + transactionDetails.getTransactionDetailsId();
-                                    if(keyValue != null && keyValue.equals("default")) {
+                                    if(keyValue != null && keyValue.equals("dev")) {
                                         deleteFileFromLocal(oldfileName, dir);
                                         transactionRepository.save(transactionDetails);
-                                    }else if(keyValue != null && keyValue.equals("dev")) {
+                                    }else if(keyValue != null && keyValue.equals("aws")) {
                                         String returnmsg = deleteFromS3.deleteFile(transactionDetails, oldfileName);
                                         if (returnmsg.equalsIgnoreCase("deleted")) {
                                             System.out.println("SUCCESSFULLY DELETED FROM S3!!!");

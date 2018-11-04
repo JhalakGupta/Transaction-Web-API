@@ -9,7 +9,7 @@ install: true
 script:
   - pwd
   - cd webapp
-  - mvn install -DskipTests=true
+  - mvn clean install -DskipTests=true
   
 after_success:
   - pwd
@@ -48,4 +48,3 @@ deploy:
     region: us-east-1
     secret_access_key: $secret_access_key
     wait-until-deployed: true
-
