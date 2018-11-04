@@ -76,7 +76,7 @@
 				"UserData": {
 					"Fn::Base64": {
 						"Fn::Join": [
-	   "\n",
+							"\n",
 							[
 								"#!/bin/bash -xe ",
 								"yum install ruby ntp wget java-1.8.0-openjdk-devel -y",
@@ -124,60 +124,31 @@
 								"#systemctl enable cloudwatch.service",
 								"systemctl enable tomcat.service",
 								"systemctl start tomcat.service",
-								"#echo \"export JAVA_OPTS=\\\"\\$JAVA_OPTS -Dspring.profiles.active=aws\\\"\" >> /usr/lib/systemd/system/setenv.sh \n",
-								{
-								  "Fn::Join": [
-									"", [
-									  "echo ' export JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.url=\"jdbc:postgres://",
-									  {
-										"Fn::GetAtt": [
-											"ourRDSInstance", 
-											"Endpoint.Address"
-										]
-									  },
+								
+								"cd /opt/tomcat",
+
+								"sudo touch bin/setenv.sh",
+                          		"sudo chmod 777 bin/setenv.sh",
+								
+								"sudo echo 'export #!/bin/bash -xe ' >> bin/setenv.sh \n",
+								"sudo echo 'export JAVA_OPTS=\\\"\\$JAVA_OPTS -DSPRING_PROFILES_ACTIVE=aws\\\"' >> /usr/lib/systemd/system/setenv.sh \n",
+								{ "Fn::Join":["", ["sudo echo 'export JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.url=\"jdbc::postgresql//",
+									  { "Fn::GetAtt": ["ourRDSInstance", "Endpoint.Address"]},
 									  ":5432/",
-									  {
-										"Ref": "DBName"
-									  },
-									  "\"\"'>> /usr/lib/systemd/system/setenv.sh \n"
+									  {	"Ref": "DBName"},
+									  "\"'>> bin/setenv.sh \n"
 									]
 								  ]
 								},
-								"echo 'export JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.username=\"",
-								{
-								  "Ref": "MasterUsername"
-								},
-								"\"\"' >> /usr/lib/systemd/system/setenv.sh \n",
-								"echo 'export JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.password=\"",
-								{
-								  "Ref": "MasterUserPwd"
-								},
-								"\"\"' >> //usr/lib/systemd/system/setenv.sh \n",
-								"echo 'export JAVA_OPTS=\"$JAVA_OPTS -Damazon.s3.default-bucket=\"",
-								{
-								  "Ref": "BucketName"
-								},                          
-										"service tomcat8 restart \n",
-										{
-										  "Fn::Join":[
-											"",[
-											  "debconf-set-selections <<< 'mysql-server mysql-server/root_password password ",
-											  {"Ref": "MySqlClientPass"},
-											  "'\" \n"
-											]
-										  ]
-										},
-										{
-										  "Fn::Join":[
-											"",[
-											  "debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password ",
-											  {"Ref": "MySqlClientPass"},
-											  "'\" \n"
-											]
-										  ]
-										},
-								"service tomcat8 restart \n",
-								"yum install mysql-server \n"
+								{"Fn::Join": ["", ["echo 'export JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.username=\"",
+											{ "Ref": "MasterUsername"},"\"' >> bin/setenv.sh \n"]]},
+								{"Fn::Join": ["",["echo 'export JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.password=\"",
+											{ "Ref": "MasterUserPwd"}, "\"' >> bin/setenv.sh \n"]]},
+								{"Fn::Join": ["", ["echo 'export JAVA_OPTS=\"$JAVA_OPTS -Damazon.s3.default-bucket=\"",
+											{ "Ref": "BucketName"}, "\"' >> bin/setenv.sh \n"]]},
+								
+								
+								"systemctl start tomcat.service"
 							]
 						]
 					}
@@ -186,7 +157,7 @@
 					{
 						"DeviceName":"/dev/sda1",
 						"Ebs":{
-							"DeleteOnTermination":true,
+							"DeleteOnTermination": true,
 							"VolumeSize":{
 								"Ref":"EC2VolumeSize"
 							},
@@ -254,12 +225,36 @@
 			"Type":"AWS::S3::Bucket",
 			"Description":"S3 Bucket to store attachment files",
 			"Properties":{
-				"AccessControl":"Private",
 				"BucketName":{
 					"Ref":"BucketName"
-				}
+				},
+				"AccessControl": "Private"
 			}
 		},
+
+		"ourS3BucketPolicy":{
+			"Type" : "AWS::S3::BucketPolicy",
+			"Properties" : {
+			  "Bucket" : {"Ref": "ourS3Bucket"},
+			  "PolicyDocument": {
+				"Statement": [{
+				  "Action":["s3:*"],
+				  "Effect":"Allow",
+				  "Resource": [{ "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "BucketName" } , "/*" ]]},
+							   { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "BucketName" }]]}],
+				  "Principal":"*",
+				  "Condition":{
+					"StringLike":{
+					  "aws:Referer":[
+						"*"
+					  ]
+					}
+				  }
+				}]
+			  }
+			}
+		  },
+
 		"ourRDSDBSubnet":{
 			"Type":"AWS::RDS::DBSubnetGroup",
 			"Properties":{
@@ -277,15 +272,15 @@
 		"ourRDSInstance":{
 			"Type":"AWS::RDS::DBInstance",
 			"Properties":{
-				"AllocatedStorage":"10",
+				"AllocatedStorage":"100",
 				"MasterUsername":{
 					"Ref":"MasterUsername"
 				},
 				"MasterUserPassword":{
 					"Ref":"MasterUserPwd"
 				},
-				"MultiAZ":false,
-				"PubliclyAccessible":false,
+				"MultiAZ": false,
+				"PubliclyAccessible": false,
 				"DBName":{
 					"Ref":"DBName"
 				},
@@ -306,7 +301,8 @@
 						"Ref":"RDSSecurityGroup"
 					}
 				]
-			}
+			},
+			"DeletionPolicy": "Delete"
 		}
 	}
 }

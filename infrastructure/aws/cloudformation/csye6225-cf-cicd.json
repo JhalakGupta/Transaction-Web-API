@@ -20,12 +20,6 @@
     "CodeDeployApplicationName": {
       "Type": "String"
     },
-    "AWSRegion": {
-      "Type": "String"
-    },
-    "AWSAccountID": {
-      "Type": "String"
-    },
     "CodeDeployEC2S3PolicyName":{
       "Type":"String"
     },
@@ -34,7 +28,11 @@
     },
     "EC2Name":{
 			"Type":"String"
-		}
+    },
+    "AppBucketName":{
+      "Description":"App Bucket",
+      "Type":"String"
+   }
   },
   "Resources": {
     "ourCodeDeployServiceRole": {
@@ -71,6 +69,7 @@
             "Effect": "Allow"
           }]
         },
+        "Path":"/",
         "RoleName": {
           "Ref": "CodeDeployEC2ServiceRoleName"
         },
@@ -119,10 +118,10 @@
                 [
                   "arn:aws:codedeploy",
                   {
-                    "Ref": "AWSRegion"
+                    "Ref": "AWS::Region"
                   },
                   {
-                    "Ref": "AWSAccountID"
+                    "Ref": "AWS::AccountId"
                   },
                   "application",
                   {
@@ -153,10 +152,10 @@
                 [
                   "arn:aws:codedeploy",
                   {
-                    "Ref": "AWSRegion"
+                    "Ref": "AWS::Region"
                   },
                   {
-                    "Ref": "AWSAccountID"
+                    "Ref": "AWS::AccountId"
                   },
                   "deploymentconfig:CodeDeployDefault.OneAtATime"
                 ]
@@ -168,10 +167,10 @@
                 [
                   "arn:aws:codedeploy",
                   {
-                    "Ref": "AWSRegion"
+                    "Ref": "AWS::Region"
                   },
                   {
-                    "Ref": "AWSAccountID"
+                    "Ref": "AWS::AccountId"
                   },
                   "deploymentconfig:CodeDeployDefault.HalfAtATime"
                 ]
@@ -183,10 +182,10 @@
                 [
                   "arn:aws:codedeploy",
                   {
-                    "Ref": "AWSRegion"
+                    "Ref": "AWS::Region"
                   },
                   {
-                    "Ref": "AWSAccountID"
+                    "Ref": "AWS::AccountId"
                   },
                   "deploymentconfig:CodeDeployDefault.AllAtOnce"
                 ]
@@ -286,6 +285,32 @@
 					},
           "Type" : "KEY_AND_VALUE"
         }]
+      }
+    },
+
+    "AccessAttachmentToS3Bucket": {
+      "Type" : "AWS::IAM::ManagedPolicy",
+      "Properties":{
+      "Description" : "Policy for uploading attachments into S3",
+      "ManagedPolicyName" : "Access-Attachment-To-S3-Bucket",
+      "PolicyDocument":{
+      "Version": "2012-10-17",
+      "Statement": [
+      {
+      "Action": [
+        "s3:Get*",
+        "s3:List*",
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:PutObjectAcl"
+      ],
+      "Effect": "Allow",
+      "Resource": {"Fn::Join":["",["arn:aws:s3:::",{"Ref":"AppBucketName"},"/*"]]}
+      }
+      ]
+      },
+      "Roles" : [{ "Ref": "ourCodeDeployEC2ServiceRole"}]
       }
     }
   }
