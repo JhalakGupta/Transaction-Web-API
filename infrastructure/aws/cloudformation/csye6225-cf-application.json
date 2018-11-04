@@ -131,7 +131,7 @@
                           		"sudo chmod 777 bin/setenv.sh",
 								
 								"sudo echo 'export #!/bin/bash -xe ' >> bin/setenv.sh \n",
-								"sudo echo 'export JAVA_OPTS=\\\"\\$JAVA_OPTS -DSPRING_PROFILES_ACTIVE=aws\\\"' >> /usr/lib/systemd/system/setenv.sh \n",
+								"sudo echo 'export JAVA_OPTS=\\\"\\$JAVA_OPTS -DSPRING_PROFILES_ACTIVE=aws\\\"' >> bin/setenv.sh \n",
 								{ "Fn::Join":["", ["sudo echo 'export JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.url=\"jdbc::postgresql//",
 									  { "Fn::GetAtt": ["ourRDSInstance", "Endpoint.Address"]},
 									  ":5432/",
