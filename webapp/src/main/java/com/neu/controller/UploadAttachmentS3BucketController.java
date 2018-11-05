@@ -14,10 +14,12 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.neu.pojo.TransactionDetails;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.List;
+
 
 public class UploadAttachmentS3BucketController {
 
