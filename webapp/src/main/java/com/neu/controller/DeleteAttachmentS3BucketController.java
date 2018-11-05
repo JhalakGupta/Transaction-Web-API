@@ -20,8 +20,7 @@ import java.util.List;
 
 public class DeleteAttachmentS3BucketController {
 
-    @Autowired
-    private Environment environment;
+
     ObjectMetadata objectMetadata = new ObjectMetadata();
 
 
@@ -34,8 +33,6 @@ public class DeleteAttachmentS3BucketController {
          * InstanceProfileCredentialsProvider : false does not refresh the credentials
          */
         System.out.println("IN delete method");
-        String bucketN = environment.getProperty("bucket.name");
-        System.out.println("Bucket name" + bucketN);
 
         InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider
                 (true);
@@ -64,7 +61,7 @@ public class DeleteAttachmentS3BucketController {
         for(Bucket bucket : buckets) {
             System.out.println(bucket.getName());
 
-            if(bucket.getName().equals(bucketN))
+            if(bucket.getName().contains("csye6225") && !bucket.getName().contains("code-deploy"))
             {
                 bucketName=bucket.getName();
                 System.out.println("BUCKET FOUND");
