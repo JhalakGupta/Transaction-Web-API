@@ -14,14 +14,15 @@ import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.neu.pojo.TransactionDetails;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 import java.util.List;
 
 public class DeleteAttachmentS3BucketController {
 
-    @Autowired
-    private Environment environment;
+    @Value("${amazonProperties.bucketName}")
+    private String bucketN;
     ObjectMetadata objectMetadata = new ObjectMetadata();
 
 
@@ -34,8 +35,6 @@ public class DeleteAttachmentS3BucketController {
          * InstanceProfileCredentialsProvider : false does not refresh the credentials
          */
         System.out.println("IN delete method");
-        String bucketN = environment.getProperty("bucket.name");
-        System.out.println("Bucket name" + bucketN);
 
         InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider
                 (true);
@@ -57,8 +56,6 @@ public class DeleteAttachmentS3BucketController {
         AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withCredentials(provider).withRegion(Regions.US_EAST_1).build();
         System.out.println("InstanceProfileCreated");*/
         String bucketName = null;
-
-
 
         List<Bucket> buckets = s3Client.listBuckets();
         for(Bucket bucket : buckets) {

@@ -414,7 +414,7 @@ public class TransactionController {
                                     UploadAttachmentS3BucketController uploadToS3 = new UploadAttachmentS3BucketController();
                                     for (MultipartFile file : uploadfiles) {
                                         System.out.println("Enter For Loop");
-                                        String keyName = uploadToS3.uploadFileOnS3(transactionDetails, file);
+                                        String keyName = uploadToS3.uploadFileOnS3(transactionDetails,file);
                                         if (keyName.equals(null)) {
                                             json.addProperty("error", "An error occured while JJJJ uploading files!!");
                                             return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
@@ -747,7 +747,7 @@ public class TransactionController {
                                     UploadAttachmentS3BucketController uploadToS3 = new UploadAttachmentS3BucketController();
                                     for (MultipartFile file : uploadfiles) {
 
-                                        String keyName = uploadToS3.uploadFileOnS3(transactionDetails, file);
+                                        String keyName = uploadToS3.uploadFileOnS3(transactionDetails,file);
                                         if (keyName.equals(null)) {
                                             json.addProperty("error", "An error occured while uploading files!!");
                                             return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
