@@ -109,7 +109,7 @@
 								"echo 'Environment=CATALINA_HOME=/opt/tomcat' >> tomcat.service",
 								"echo 'Environment=CATALINA_BASE=/opt/tomcat' >> tomcat.service",
 								"echo 'Environment=\"CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC\"' >> tomcat.service",
-								"echo 'Environment=\"JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom\"' >> tomcat.service",
+								"echo 'Environment=\"JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses=true\"' >> tomcat.service",
 								"echo 'ExecStart=/opt/tomcat/bin/startup.sh' >> tomcat.service",
 								"echo 'ExecStop=/bin/kill -15 $MAINPID' >> tomcat.service",
 								"echo 'User=tomcat' >> tomcat.service",
@@ -130,22 +130,18 @@
 								"sudo touch bin/setenv.sh",
                           		"sudo chmod 777 bin/setenv.sh",
 								
-								"sudo echo 'export #!/bin/bash -xe ' >> bin/setenv.sh \n",
-								"sudo echo 'export JAVA_OPTS=\"$JAVA_OPTS -DSPRING_PROFILES_ACTIVE=aws\"' >> bin/setenv.sh \n",
-								{ "Fn::Join":["", ["sudo echo 'export JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.url=\"jdbc::postgresql//",
+								"sudo echo 'export SPRING_PROFILES_ACTIVE=aws' >> bin/setenv.sh \n",
+								{ "Fn::Join":["", ["sudo echo 'export URL=jdbc::postgresql//",
 									  { "Fn::GetAtt": ["ourRDSInstance", "Endpoint.Address"]},
 									  ":5432/",
 									  {	"Ref": "DBName"},
-									  "\"'>> bin/setenv.sh \n"
+									  "'>> bin/setenv.sh \n"
 									]
 								  ]
 								},
-								{"Fn::Join": ["", ["echo 'export JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.username=\"",
-											{ "Ref": "MasterUsername"},"\"' >> bin/setenv.sh \n"]]},
-								{"Fn::Join": ["",["echo 'export JAVA_OPTS=\"$JAVA_OPTS -Dspring.datasource.password=\"",
-											{ "Ref": "MasterUserPwd"}, "\"' >> bin/setenv.sh \n"]]},
-								{"Fn::Join": ["", ["echo 'export JAVA_OPTS=\"$JAVA_OPTS -Damazon.s3.default-bucket=\"",
-											{ "Ref": "BucketName"}, "\"' >> bin/setenv.sh \n"]]},
+								{"Fn::Join": ["",["sudo echo 'export USERNAME=",{ "Ref": "MasterUsername"}, "' >> bin/setenv.sh"]]},
+								{ "Fn::Join":["",["sudo echo 'export PASSWORD=",{"Ref" : "MasterUserPwd"}, "'>> bin/setenv.sh"]]},
+								{ "Fn::Join":["",["sudo echo 'export BUCKET_NAME=",{"Ref" : "BucketName"}, "'>> bin/setenv.sh"]]},
 								
 								
 								"systemctl start tomcat.service"
