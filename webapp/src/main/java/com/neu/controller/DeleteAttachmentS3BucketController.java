@@ -35,7 +35,7 @@ public class DeleteAttachmentS3BucketController {
          */
         System.out.println("IN delete method");
         String bucketN = environment.getProperty("bucket.name");
-        System.out.println("BUcket name" + bucketN);
+        System.out.println("Bucket name" + bucketN);
 
         InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider
                 (true);
@@ -64,7 +64,7 @@ public class DeleteAttachmentS3BucketController {
         for(Bucket bucket : buckets) {
             System.out.println(bucket.getName());
 
-            if(bucket.getName().equals("guptaj.me.csye6225.com"))
+            if(bucket.getName().equals(bucketN))
             {
                 bucketName=bucket.getName();
                 System.out.println("BUCKET FOUND");

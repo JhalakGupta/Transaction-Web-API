@@ -21,7 +21,8 @@ import java.util.List;
 
 public class UploadAttachmentS3BucketController {
 
-
+    @Autowired
+    private Environment environment;
     ObjectMetadata objectMetadata = new ObjectMetadata();
 
     public String uploadFileOnS3(TransactionDetails transactionDetail, MultipartFile multipartfile) {
@@ -50,12 +51,12 @@ public class UploadAttachmentS3BucketController {
 
 
         System.out.println("Before the Bucket List for loop");
-
+        String bucketN = environment.getProperty("bucket.name");
         List<Bucket> buckets = s3Client.listBuckets();
         for (Bucket bucket : buckets) {
             System.out.println("In the bucket list loop");
             System.out.println(bucket.getName());
-            if (bucket.getName().equals("guptaj.me.csye6225.com")) {
+            if (bucket.getName().equals(bucketN)) {
                 bucketName = bucket.getName();
                 break;
             }

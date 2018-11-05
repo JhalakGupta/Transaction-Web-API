@@ -131,7 +131,7 @@
                           		"sudo chmod 777 bin/setenv.sh",
 								
 								"sudo echo 'export SPRING_PROFILES_ACTIVE=aws' >> bin/setenv.sh \n",
-								{ "Fn::Join":["", ["sudo echo 'export URL=jdbc::postgresql//",
+								{ "Fn::Join":["", ["sudo echo 'export URL=jdbc:postgresql://",
 									  { "Fn::GetAtt": ["ourRDSInstance", "Endpoint.Address"]},
 									  ":5432/",
 									  {	"Ref": "DBName"},
