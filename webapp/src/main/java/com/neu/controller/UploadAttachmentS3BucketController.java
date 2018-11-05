@@ -54,6 +54,7 @@ public class UploadAttachmentS3BucketController {
 
         System.out.println("Before the Bucket List for loop");
         String bucketN = environment.getProperty("bucket.name");
+        System.out.println(bucketN+"Foobar");
         List<Bucket> buckets = s3Client.listBuckets();
         for (Bucket bucket : buckets) {
             System.out.println("In the bucket list loop");
