@@ -13,6 +13,7 @@ import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.neu.pojo.TransactionDetails;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -23,8 +24,10 @@ import java.util.List;
 
 public class UploadAttachmentS3BucketController {
 
-    @Autowired
-    private Environment environment;
+//    @Autowired
+//    private Environment environment;
+@Value("${amazonProperties.bucketName}")
+private String bucketN;
     ObjectMetadata objectMetadata = new ObjectMetadata();
 
     public String uploadFileOnS3(TransactionDetails transactionDetail, MultipartFile multipartfile) {
@@ -35,15 +38,6 @@ public class UploadAttachmentS3BucketController {
 
         System.out.println("In function UploadFile");
 
-//        AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
-//
-//        System.out.println("A" + credentials.toString());
-//
-//        AmazonS3 s3Client = AmazonS3ClientBuilder
-//                .standard()
-//                .withCredentials(new AWSStaticCredentialsProvider(credentials))
-//                .build();
-
        InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider
                (true);
 
@@ -53,9 +47,7 @@ public class UploadAttachmentS3BucketController {
 
 
         System.out.println("Before the Bucket List for loop");
-        System.out.println(environment);
-        String bucketN = environment.getProperty("bucket.name");
-        System.out.println(bucketN+"Foobar");
+
         List<Bucket> buckets = s3Client.listBuckets();
         for (Bucket bucket : buckets) {
             System.out.println("In the bucket list loop");
