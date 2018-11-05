@@ -47,7 +47,7 @@ private String bucketN;
 
 
         System.out.println("Before the Bucket List for loop");
-
+        System.out.println(bucketN);
         List<Bucket> buckets = s3Client.listBuckets();
         for (Bucket bucket : buckets) {
             System.out.println("In the bucket list loop");
