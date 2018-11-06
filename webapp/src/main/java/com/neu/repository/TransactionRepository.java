@@ -12,6 +12,7 @@ public interface TransactionRepository extends JpaRepository<TransactionDetails,
 
     //TransactionDetails findByTaskId(UUID id);
     TransactionDetails findTransactionDetailsByTransactionDetailsId(UUID transactionDetailsId);
+
     //List<TransactionDetails> findTasksByUser(UserDetails userDetails);
 }
 
