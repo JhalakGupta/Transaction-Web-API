@@ -823,7 +823,7 @@ public class TransactionController {
 
         JsonObject json = new JsonObject();
 
-        User existingUser = userRepo.findByUserName(details.getUsername());
+        UserDetails existingUser = userRepo.findUserDetailsByUsername(details.getUsername());
 
         if(existingUser != null){
             AmazonSNS snsClient = AmazonSNSClientBuilder.standard()
