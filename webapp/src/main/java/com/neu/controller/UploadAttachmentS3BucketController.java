@@ -24,10 +24,13 @@ import java.util.List;
 
 public class UploadAttachmentS3BucketController {
 
+
+
 //    @Autowired
 //    private Environment environment;
 @Value("${amazonProperties.bucketName}")
 private String bucketN;
+
     ObjectMetadata objectMetadata = new ObjectMetadata();
 
     public String uploadFileOnS3(TransactionDetails transactionDetail, MultipartFile multipartfile) {
@@ -52,7 +55,7 @@ private String bucketN;
         for (Bucket bucket : buckets) {
             System.out.println("In the bucket list loop");
             System.out.println(bucket.getName());
-            if (bucket.getName().equals(bucketN)) {
+            if(bucket.getName().contains("csye6225") && !bucket.getName().contains("code-deploy")){
                 bucketName = bucket.getName();
                 break;
             }
