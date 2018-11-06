@@ -21,8 +21,11 @@ import java.util.List;
 
 public class DeleteAttachmentS3BucketController {
 
+
+
     @Value("${amazonProperties.bucketName}")
     private String bucketN;
+
     ObjectMetadata objectMetadata = new ObjectMetadata();
 
 
@@ -61,7 +64,7 @@ public class DeleteAttachmentS3BucketController {
         for(Bucket bucket : buckets) {
             System.out.println(bucket.getName());
 
-            if(bucket.getName().equals(bucketN))
+            if(bucket.getName().contains("csye6225") && !bucket.getName().contains("code-deploy"))
             {
                 bucketName=bucket.getName();
                 System.out.println("BUCKET FOUND");
