@@ -14,12 +14,17 @@ import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.neu.pojo.TransactionDetails;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 import java.util.List;
 
 public class DeleteAttachmentS3BucketController {
 
+
+
+    @Value("${amazonProperties.bucketName}")
+    private String bucketN;
 
     ObjectMetadata objectMetadata = new ObjectMetadata();
 
@@ -54,8 +59,6 @@ public class DeleteAttachmentS3BucketController {
         AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withCredentials(provider).withRegion(Regions.US_EAST_1).build();
         System.out.println("InstanceProfileCreated");*/
         String bucketName = null;
-
-
 
         List<Bucket> buckets = s3Client.listBuckets();
         for(Bucket bucket : buckets) {
