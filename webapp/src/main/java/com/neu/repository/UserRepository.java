@@ -5,5 +5,5 @@ import com.neu.pojo.UserDetails;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<UserDetails, String> {
-    User findByUserName(String userName);
+    User findByUserName(String username);
 }
