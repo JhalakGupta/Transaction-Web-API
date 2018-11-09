@@ -127,6 +127,21 @@
             <type>pom</type>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-aws-messaging -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-aws-messaging</artifactId>
+            <version>1.1.0.RELEASE</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.springframework.integration/spring-integration-aws -->
+        <dependency>
+            <groupId>org.springframework.integration</groupId>
+            <artifactId>spring-integration-aws</artifactId>
+            <version>1.0.0.RELEASE</version>
+        </dependency>
+
+
     </dependencies>
 
     <build>
