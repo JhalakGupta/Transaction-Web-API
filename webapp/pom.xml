@@ -127,21 +127,6 @@
             <type>pom</type>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.aspectj/aspectjweaver -->
-        <dependency>
-            <groupId>org.aspectj</groupId>
-            <artifactId>aspectjweaver</artifactId>
-            <version>1.8.10</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/com.netflix.servo/servo-core -->
-        <dependency>
-            <groupId>com.netflix.servo</groupId>
-            <artifactId>servo-core</artifactId>
-            <version>0.12.25</version>
-        </dependency>
-
-
     </dependencies>
 
     <build>
