@@ -417,6 +417,7 @@ public class TransactionController {
                                     for (MultipartFile file : uploadfiles) {
                                         System.out.println("Enter For Loop");
                                         String ext=FilenameUtils.getExtension(file.getOriginalFilename());
+                                        System.out.println(ext);
                                         if(ext.equalsIgnoreCase("png") ||
                                                 ext.equalsIgnoreCase("jpg")
                                                 || ext.equalsIgnoreCase("jpeg"))
@@ -429,6 +430,7 @@ public class TransactionController {
                                         }
                                         }
                                     }
+                                    System.out.println("validity:"+ isValid);
                                     if(isValid) {
                                         TransactionAttachments transactionAttachments = new TransactionAttachments();
                                         transactionRepository.save(transactionDetails);
