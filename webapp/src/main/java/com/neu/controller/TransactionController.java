@@ -406,6 +406,7 @@ public class TransactionController {
                         if(transactionDetails != null && transactionDetails.getUsername().equals(username)){
                             String uploadedFileName = Arrays.stream(uploadfiles).map(x -> x.getOriginalFilename()).filter(x -> !StringUtils.isEmpty(x)).collect(Collectors.joining(" , "));
                             json.addProperty("message", "Saved the file(s)!");
+                            boolean isValid = false;
                             try {
 
                                 String keyValue = environment.getProperty("spring.profiles.active");
@@ -420,20 +421,21 @@ public class TransactionController {
                                                 ext.equalsIgnoreCase("jpg")
                                                 || ext.equalsIgnoreCase("jpeg"))
                                         {
+                                            isValid=true;
                                         String keyName = uploadToS3.uploadFileOnS3(transactionDetails,file);
-
                                         if (keyName.equals(null)) {
                                             json.addProperty("error", "An error occured while JJJJ uploading files!!");
                                             return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
                                         }
                                         }
                                     }
-
-                                    TransactionAttachments transactionAttachments = new TransactionAttachments();
-                                    transactionRepository.save(transactionDetails);
-                                    transactionAttachments.setFileName(uploadedFileName);
-                                    transactionAttachments.setTransactionDetails(transactionDetails);
-                                    transactionAttachmentRepo.save(transactionAttachments);
+                                    if(isValid) {
+                                        TransactionAttachments transactionAttachments = new TransactionAttachments();
+                                        transactionRepository.save(transactionDetails);
+                                        transactionAttachments.setFileName(uploadedFileName);
+                                        transactionAttachments.setTransactionDetails(transactionDetails);
+                                        transactionAttachmentRepo.save(transactionAttachments);
+                                    }
 
                                 }else if(keyValue != null && keyValue.equals("dev")){
                                     saveUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails);
