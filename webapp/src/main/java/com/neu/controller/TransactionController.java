@@ -12,6 +12,7 @@ import io.swagger.annotations.Api;
 import com.google.gson.JsonObject;
 
 //import org.json.JSONArray;
+import org.apache.commons.io.FilenameUtils;
 import org.json.JSONObject;
 import org.json.simple.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -414,10 +415,17 @@ public class TransactionController {
                                     UploadAttachmentS3BucketController uploadToS3 = new UploadAttachmentS3BucketController();
                                     for (MultipartFile file : uploadfiles) {
                                         System.out.println("Enter For Loop");
+                                        String ext=FilenameUtils.getExtension(file.getOriginalFilename());
+                                        if(ext.equalsIgnoreCase("png") ||
+                                                ext.equalsIgnoreCase("jpg")
+                                                || ext.equalsIgnoreCase("jpeg"))
+                                        {
                                         String keyName = uploadToS3.uploadFileOnS3(transactionDetails,file);
+
                                         if (keyName.equals(null)) {
                                             json.addProperty("error", "An error occured while JJJJ uploading files!!");
                                             return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
+                                        }
                                         }
                                     }
 
@@ -549,27 +557,39 @@ public class TransactionController {
         }
 
 
+        boolean isValid = false;
+        for (MultipartFile file : files){
+                if (file.isEmpty()) {
+                    continue; //next pls
+                }
+         //   String fileType = "Undetermined";
+           // fileType = Files.probeContentType(file.)
 
-        for (MultipartFile file : files) {
+            String ext=FilenameUtils.getExtension( file.getOriginalFilename());
 
-            if (file.isEmpty()) {
-                continue; //next pls
+
+            if(ext.equalsIgnoreCase("png") ||
+                    ext.equalsIgnoreCase("jpg")
+                    || ext.equalsIgnoreCase("jpeg")) {
+
+                isValid = true;
+                byte[] bytes = file.getBytes();
+                //Path path = Paths.get(UPLOADED_FOLDER + file.getOriginalFilename());
+
+                Path path = Paths.get(dir + "/" + file.getOriginalFilename());
+                Files.write(path, bytes);
+
             }
 
-            byte[] bytes = file.getBytes();
-            //Path path = Paths.get(UPLOADED_FOLDER + file.getOriginalFilename());
-
-            Path path = Paths.get(dir+"/" + file.getOriginalFilename());
-            Files.write(path, bytes);
-
         }
+        if(isValid) {
 
-
-        TransactionAttachments transactionAttachments = new TransactionAttachments();
-        transactionRepository.save(transactionDetails);
-        transactionAttachments.setFileName(uploadedFileName);
-        transactionAttachments.setTransactionDetails(transactionDetails);
-        transactionAttachmentRepo.save(transactionAttachments);
+            TransactionAttachments transactionAttachments = new TransactionAttachments();
+            transactionRepository.save(transactionDetails);
+            transactionAttachments.setFileName(uploadedFileName);
+            transactionAttachments.setTransactionDetails(transactionDetails);
+            transactionAttachmentRepo.save(transactionAttachments);
+        }
     }
 
 
