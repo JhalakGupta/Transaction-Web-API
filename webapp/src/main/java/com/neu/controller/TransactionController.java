@@ -2,8 +2,13 @@ package com.neu.controller;
 
 
 
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.AmazonSNSClientBuilder;
+import com.amazonaws.services.sns.model.Topic;
 import com.neu.pojo.TransactionAttachments;
 import com.neu.pojo.TransactionDetails;
+import com.neu.pojo.User;
 import com.neu.pojo.UserDetails;
 import com.neu.repository.TransactionAttachmentsRepository;
 import com.neu.repository.TransactionRepository;
@@ -36,6 +41,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.neu.controller.LoginController.checkPassword;
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.AmazonSNSClientBuilder;
+import com.amazonaws.services.sns.model.*;
 
 @RestController
 @RequestMapping("/")
@@ -809,7 +817,36 @@ public class TransactionController {
 
         return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
+    @RequestMapping(value = "/user/resetPassword", method = RequestMethod.POST, produces = "application/json", consumes = "application/json")
+    @ResponseBody
+    public String resetPassword(@RequestBody UserDetails details,HttpServletRequest request) throws Exception{
 
+        JsonObject json = new JsonObject();
+
+        UserDetails existingUser = userRepo.findUserDetailsByUsername(details.getUsername());
+
+        if(existingUser != null){
+            AmazonSNS snsClient = AmazonSNSClientBuilder.standard()
+                    .withCredentials(new InstanceProfileCredentialsProvider(false))
+                    .build();
+            List<Topic> topics =  snsClient.listTopics().getTopics();
+
+            for(Topic topic : topics){
+
+                if(topic.getTopicArn().endsWith("ForgotPassword")){
+                    PublishRequest req = new PublishRequest(topic.getTopicArn(),details.getUsername());
+                    snsClient.publish(req);
+                    break;
+                }
+            }
+            json.addProperty("message","reset linked sent to your email address");
+        } else {
+
+            json.addProperty("message","username name doesn't exists");
+        }
+
+        return json.toString();
+    }
 
 
 }

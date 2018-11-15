@@ -55,7 +55,7 @@ private String bucketN;
         for (Bucket bucket : buckets) {
             System.out.println("In the bucket list loop");
             System.out.println(bucket.getName());
-            if(bucket.getName().contains("csye6225") && !bucket.getName().contains("code-deploy")){
+            if(bucket.getName().contains("csye6225") && !bucket.getName().contains("code-deploy") && !bucket.getName().contains("lambda")){
                 bucketName = bucket.getName();
                 break;
             }
