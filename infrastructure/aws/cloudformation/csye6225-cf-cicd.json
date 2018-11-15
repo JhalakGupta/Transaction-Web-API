@@ -17,6 +17,9 @@
     "CodeDeployS3BucketName": {
       "Type": "String"
     },
+    "LambdaS3BucketName": {
+      "Type": "String"
+    },
     "CodeDeployApplicationName": {
       "Type": "String"
     },
@@ -26,6 +29,13 @@
     "TravisCodeDeployPolicyName":{
       "Type":"String"
     },
+	"CloudWatchPolicy":{
+	   "Type":"String"
+	},	
+	"SNSPolicy":{ 
+	   "Description":"App Bucket",
+	   "Type":"String"
+	},
     "EC2Name":{
 			"Type":"String"
     },
@@ -73,6 +83,7 @@
         "RoleName": {
           "Ref": "CodeDeployEC2ServiceRoleName"
         },
+        "ManagedPolicyArns": ["arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy"],
         "Policies": [
           {
             "PolicyName": "AWSCodeDeployRolenew",
@@ -86,7 +97,10 @@
                     "ec2:DescribeInstanceStatus",
                     "ec2:TerminateInstances",
                     "tag:GetTags",
-                    "tag:GetResources"
+                    "tag:GetResources",
+					"sns:Publish",		
+					"cloudwatch:DescribeAlarms",		
+					"cloudwatch:PutMetricAlarm"
                   ],
                   "Resource": [
                     "*"
@@ -98,6 +112,87 @@
         ]
       }
     },
+	      "ourLambdaRole":{  		
+	         "Type":"AWS::IAM::Role",		
+	         "Properties":{  		
+	            "ManagedPolicyArns":[  		
+	               "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",		
+	               "arn:aws:iam::aws:policy/AmazonSESFullAccess",		
+	               "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"		
+	            ],		
+	            "AssumeRolePolicyDocument":{  		
+	               "Version":"2012-10-17",		
+	               "Statement":[  		
+	                  {  		
+	                     "Effect":"Allow",		
+	                     "Principal":{  		
+	                        "Service":[  		
+	                           "lambda.amazonaws.com"		
+	                        ]		
+	                     },		
+	                     "Action":[  		
+	                        "sts:AssumeRole"		
+	                     ]		
+	                  }		
+	               ]		
+	            }		
+	         }		
+	      },		
+	      "ourPolicySNS":{  		
+	         "Type":"AWS::IAM::Policy",		
+	         "Properties":{  		
+	            "PolicyName":{  		
+	               "Ref":"SNSPolicy"		
+	            },		
+	            "PolicyDocument":{  		
+	               "Version":"2012-10-17",		
+	               "Statement":[  		
+	                  {  		
+	                     "Action":[  		
+	                        "sns:*"		
+	                     ],		
+	                     "Effect":"Allow",		
+	                     "Resource":"*"		
+	                  }		
+	               ]		
+	            },		
+	            "Roles":[  		
+	               {  		
+	                  "Ref":"ourCodeDeployEC2ServiceRole"		
+	               }		
+	            ]		
+	         }		
+	      },		
+	      "ourPolicyCloudwatch":{  		
+	         "Type":"AWS::IAM::Policy",		
+	         "Properties":{  		
+	            "PolicyName":{  		
+	               "Ref":"CloudWatchPolicy"		
+	            },		
+	            "PolicyDocument":{  		
+	               "Version":"2012-10-17",		
+	               "Statement":[  		
+	                  {  		
+	                     "Effect":"Allow",		
+	                     "Action":[  		
+	                        "logs:CreateLogGroup",		
+	                        "logs:CreateLogStream",		
+	                        "logs:PutLogEvents",		
+	                        "logs:DescribeLogStreams"		
+	                     ],		
+	                     "Resource":[  		
+	                        "arn:aws:logs:*:*:*"		
+	                     ]		
+	                  }		
+	               ]		
+	            },		
+	            "Roles":[  		
+	               {  		
+	                  "Ref":"ourCodeDeployEC2ServiceRole"		
+	               }		
+	            ]		
+	         }		
+	      },
     "ourTravisCodeDeployPolicy": {
       "Type": "AWS::IAM::Policy",
       "Properties": {
@@ -252,6 +347,16 @@
         "AccessControl": "Private",
         "BucketName": {
           "Ref": "CodeDeployS3BucketName"
+        }
+      }
+    },
+    "ourLambdaS3Bucket": {
+      "Type": "AWS::S3::Bucket",
+      "Description": "Lambda S3 bucket where TravisCI deploys build artifacts",
+      "Properties": {
+        "AccessControl": "Private",
+        "BucketName": {
+          "Ref": "LambdaS3BucketName"
         }
       }
     },

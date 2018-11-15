@@ -26,7 +26,10 @@
 		"IGName": {
 			"Type": "String"
 		},
-		"PubicRouteTableName": {
+		"PublicRouteTableName": {
+			"Type": "String"
+		},
+		"PrivateRouteTableName": {
 			"Type": "String"
 		}
 	},
@@ -179,7 +182,21 @@
 				"Tags": [{
 					"Key": "Name",
 					"Value": {
-						"Ref": "PubicRouteTableName"
+						"Ref": "PublicRouteTableName"
+					}
+				}]
+			}
+		},
+		"ourPrivateRouteTable": {
+			"Type": "AWS::EC2::RouteTable",
+			"Properties": {
+				"VpcId": {
+					"Ref": "ourVPC"
+				},
+				"Tags": [{
+					"Key": "Name",
+					"Value": {
+						"Ref": "PrivateRouteTableName"
 					}
 				}]
 			}
@@ -214,6 +231,39 @@
 				},
 				"SubnetId": {
 					"Ref": "ourSubnet3"
+				}
+			}
+		},
+		"ourSubnet4RouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "ourPrivateRouteTable"
+				},
+				"SubnetId": {
+					"Ref": "ourSubnet4"
+				}
+			}
+		},
+		"ourSubnet5RouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "ourPrivateRouteTable"
+				},
+				"SubnetId": {
+					"Ref": "ourSubnet5"
+				}
+			}
+		},
+		"ourSubnet6RouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "ourPrivateRouteTable"
+				},
+				"SubnetId": {
+					"Ref": "ourSubnet6"
 				}
 			}
 		},
