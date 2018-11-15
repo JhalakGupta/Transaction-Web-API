@@ -2,8 +2,13 @@ package com.neu.controller;
 
 
 
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.AmazonSNSClientBuilder;
+import com.amazonaws.services.sns.model.Topic;
 import com.neu.pojo.TransactionAttachments;
 import com.neu.pojo.TransactionDetails;
+import com.neu.pojo.User;
 import com.neu.pojo.UserDetails;
 import com.neu.repository.TransactionAttachmentsRepository;
 import com.neu.repository.TransactionRepository;
@@ -12,7 +17,6 @@ import io.swagger.annotations.Api;
 import com.google.gson.JsonObject;
 
 //import org.json.JSONArray;
-import org.apache.commons.io.FilenameUtils;
 import org.json.JSONObject;
 import org.json.simple.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +41,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.neu.controller.LoginController.checkPassword;
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.AmazonSNSClientBuilder;
+import com.amazonaws.services.sns.model.*;
 
 @RestController
 @RequestMapping("/")
@@ -406,7 +413,6 @@ public class TransactionController {
                         if(transactionDetails != null && transactionDetails.getUsername().equals(username)){
                             String uploadedFileName = Arrays.stream(uploadfiles).map(x -> x.getOriginalFilename()).filter(x -> !StringUtils.isEmpty(x)).collect(Collectors.joining(" , "));
                             json.addProperty("message", "Saved the file(s)!");
-                            boolean isValid = false;
                             try {
 
                                 String keyValue = environment.getProperty("spring.profiles.active");
@@ -416,28 +422,18 @@ public class TransactionController {
                                     UploadAttachmentS3BucketController uploadToS3 = new UploadAttachmentS3BucketController();
                                     for (MultipartFile file : uploadfiles) {
                                         System.out.println("Enter For Loop");
-                                        String ext=FilenameUtils.getExtension(file.getOriginalFilename());
-                                        System.out.println(ext);
-                                        if(ext.equalsIgnoreCase("png") ||
-                                                ext.equalsIgnoreCase("jpg")
-                                                || ext.equalsIgnoreCase("jpeg"))
-                                        {
-                                            isValid=true;
                                         String keyName = uploadToS3.uploadFileOnS3(transactionDetails,file);
                                         if (keyName.equals(null)) {
                                             json.addProperty("error", "An error occured while JJJJ uploading files!!");
                                             return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
                                         }
-                                        }
                                     }
-                                    System.out.println("validity:"+ isValid);
-                                    if(isValid) {
-                                        TransactionAttachments transactionAttachments = new TransactionAttachments();
-                                        transactionRepository.save(transactionDetails);
-                                        transactionAttachments.setFileName(uploadedFileName);
-                                        transactionAttachments.setTransactionDetails(transactionDetails);
-                                        transactionAttachmentRepo.save(transactionAttachments);
-                                    }
+
+                                    TransactionAttachments transactionAttachments = new TransactionAttachments();
+                                    transactionRepository.save(transactionDetails);
+                                    transactionAttachments.setFileName(uploadedFileName);
+                                    transactionAttachments.setTransactionDetails(transactionDetails);
+                                    transactionAttachmentRepo.save(transactionAttachments);
 
                                 }else if(keyValue != null && keyValue.equals("dev")){
                                     saveUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails);
@@ -561,39 +557,27 @@ public class TransactionController {
         }
 
 
-        boolean isValid = false;
-        for (MultipartFile file : files){
-                if (file.isEmpty()) {
-                    continue; //next pls
-                }
-         //   String fileType = "Undetermined";
-           // fileType = Files.probeContentType(file.)
 
-            String ext=FilenameUtils.getExtension( file.getOriginalFilename());
+        for (MultipartFile file : files) {
 
-
-            if(ext.equalsIgnoreCase("png") ||
-                    ext.equalsIgnoreCase("jpg")
-                    || ext.equalsIgnoreCase("jpeg")) {
-
-                isValid = true;
-                byte[] bytes = file.getBytes();
-                //Path path = Paths.get(UPLOADED_FOLDER + file.getOriginalFilename());
-
-                Path path = Paths.get(dir + "/" + file.getOriginalFilename());
-                Files.write(path, bytes);
-
+            if (file.isEmpty()) {
+                continue; //next pls
             }
 
-        }
-        if(isValid) {
+            byte[] bytes = file.getBytes();
+            //Path path = Paths.get(UPLOADED_FOLDER + file.getOriginalFilename());
 
-            TransactionAttachments transactionAttachments = new TransactionAttachments();
-            transactionRepository.save(transactionDetails);
-            transactionAttachments.setFileName(uploadedFileName);
-            transactionAttachments.setTransactionDetails(transactionDetails);
-            transactionAttachmentRepo.save(transactionAttachments);
+            Path path = Paths.get(dir+"/" + file.getOriginalFilename());
+            Files.write(path, bytes);
+
         }
+
+
+        TransactionAttachments transactionAttachments = new TransactionAttachments();
+        transactionRepository.save(transactionDetails);
+        transactionAttachments.setFileName(uploadedFileName);
+        transactionAttachments.setTransactionDetails(transactionDetails);
+        transactionAttachmentRepo.save(transactionAttachments);
     }
 
 
@@ -833,7 +817,36 @@ public class TransactionController {
 
         return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
+    @RequestMapping(value = "/user/resetPassword", method = RequestMethod.POST, produces = "application/json", consumes = "application/json")
+    @ResponseBody
+    public String resetPassword(@RequestBody UserDetails details,HttpServletRequest request) throws Exception{
 
+        JsonObject json = new JsonObject();
+
+        UserDetails existingUser = userRepo.findUserDetailsByUsername(details.getUsername());
+
+        if(existingUser != null){
+            AmazonSNS snsClient = AmazonSNSClientBuilder.standard()
+                    .withCredentials(new InstanceProfileCredentialsProvider(false))
+                    .build();
+            List<Topic> topics =  snsClient.listTopics().getTopics();
+
+            for(Topic topic : topics){
+
+                if(topic.getTopicArn().endsWith("ForgotPassword")){
+                    PublishRequest req = new PublishRequest(topic.getTopicArn(),details.getUsername());
+                    snsClient.publish(req);
+                    break;
+                }
+            }
+            json.addProperty("message","reset linked sent to your email address");
+        } else {
+
+            json.addProperty("message","username name doesn't exists");
+        }
+
+        return json.toString();
+    }
 
 
 }
