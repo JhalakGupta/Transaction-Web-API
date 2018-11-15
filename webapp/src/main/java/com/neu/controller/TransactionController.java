@@ -833,7 +833,7 @@ public class TransactionController {
 
             for(Topic topic : topics){
 
-                if(topic.getTopicArn().endsWith("password_reset")){
+                if(topic.getTopicArn().endsWith("ForgotPassword")){
                     PublishRequest req = new PublishRequest(topic.getTopicArn(),details.getUsername());
                     snsClient.publish(req);
                     break;
