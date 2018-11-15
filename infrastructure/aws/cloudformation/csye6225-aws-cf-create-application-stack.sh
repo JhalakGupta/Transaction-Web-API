@@ -13,6 +13,7 @@ DB_INSTANCE_IDENTIFIER="csye6225-fall2018"
 DB_ENGINE="postgres"
 BUCKET_NAME="murthyva.me.csye6225.com"
 EC2_KEY="csye6225"
+SNSTOPICNAME="password_reset"
 
 export vpcId=$(aws ec2 describe-vpcs --query "Vpcs[*].[CidrBlock, VpcId]" --output text|grep 10.0.0.0/16|awk '{print $2}')
 echo "VpcId : ${vpcId}"
@@ -28,8 +29,33 @@ export rDSSecurityGroupId=$(aws ec2 describe-security-groups --query 'SecurityGr
 echo "rDSSecurityGroupId : ${rDSSecurityGroupId}"
 export eC2RoleName=$(aws iam list-roles --query 'Roles[*].[RoleName]' --output text|grep EC2Service|awk '{print $1}')
 echo "eC2RoleName : ${eC2RoleName}"
+export snsTopicArn=$(aws sns list-topics --output text|grep ${SNSTOPICNAME}|awk '{print $2}')
+echo "snsTopicArn : ${snsTopicArn}"
 
-aws cloudformation create-stack --stack-name $STACK_NAME --capabilities "CAPABILITY_NAMED_IAM" --template-body file://csye6225-cf-application.json --parameters ParameterKey=VpcId,ParameterValue=$vpcId ParameterKey=EC2Name,ParameterValue=$EC2_NAME ParameterKey=EC2SecurityGroup,ParameterValue=$eC2SecurityGroupId ParameterKey=SubnetId1,ParameterValue=$subnetId1 ParameterKey=EC2VolumeSize,ParameterValue=$EC2VOL_SIZE ParameterKey=EC2VolumeType,ParameterValue=$EC2VOL_TYPE ParameterKey=AMIImage,ParameterValue=$AMI_IMAGE ParameterKey=DynamoDBName,ParameterValue=$DYNAMO_TABLE ParameterKey=MasterUsername,ParameterValue=$MASTER_USERNAME ParameterKey=MasterUserPwd,ParameterValue=$MASTER_USERPWD ParameterKey=DBName,ParameterValue=$DB_NAME ParameterKey=DBInstanceClass,ParameterValue=$DB_INSTANCE_CLASS ParameterKey=DBInstanceIdentifier,ParameterValue=$DB_INSTANCE_IDENTIFIER ParameterKey=DBEngine,ParameterValue=$DB_ENGINE ParameterKey=SubnetId2,ParameterValue=$subnetId2 ParameterKey=SubnetId3,ParameterValue=$subnetId3 ParameterKey=RDSSecurityGroup,ParameterValue=$rDSSecurityGroupId ParameterKey=BucketName,ParameterValue=$BUCKET_NAME ParameterKey=EC2RoleName,ParameterValue=$eC2RoleName ParameterKey=EC2Key,ParameterValue=$EC2_KEY
+aws cloudformation create-stack --stack-name $STACK_NAME \
+ --capabilities "CAPABILITY_NAMED_IAM" \
+ --template-body file://csye6225-cf-application.json \
+ --parameters ParameterKey=VpcId,ParameterValue=$vpcId \
+ ParameterKey=EC2Name,ParameterValue=$EC2_NAME \
+ ParameterKey=EC2SecurityGroup,ParameterValue=$eC2SecurityGroupId \
+ ParameterKey=SubnetId1,ParameterValue=$subnetId1 \
+ ParameterKey=EC2VolumeSize,ParameterValue=$EC2VOL_SIZE \
+ ParameterKey=EC2VolumeType,ParameterValue=$EC2VOL_TYPE \
+ ParameterKey=AMIImage,ParameterValue=$AMI_IMAGE \
+ ParameterKey=DynamoDBName,ParameterValue=$DYNAMO_TABLE \
+ ParameterKey=MasterUsername,ParameterValue=$MASTER_USERNAME \
+ ParameterKey=MasterUserPwd,ParameterValue=$MASTER_USERPWD \
+ ParameterKey=DBName,ParameterValue=$DB_NAME \
+ ParameterKey=DBInstanceClass,ParameterValue=$DB_INSTANCE_CLASS \
+ ParameterKey=DBInstanceIdentifier,ParameterValue=$DB_INSTANCE_IDENTIFIER \
+ ParameterKey=DBEngine,ParameterValue=$DB_ENGINE \
+ ParameterKey=SubnetId2,ParameterValue=$subnetId2 \
+ ParameterKey=SubnetId3,ParameterValue=$subnetId3 \
+ ParameterKey=RDSSecurityGroup,ParameterValue=$rDSSecurityGroupId \
+ ParameterKey=BucketName,ParameterValue=$BUCKET_NAME \
+ ParameterKey=EC2RoleName,ParameterValue=$eC2RoleName \
+ ParameterKey=EC2Key,ParameterValue=$EC2_KEY \
+ ParameterKey=SNSTopicArn,ParameterValue=$snsTopicArn
 
 export STACK_STATUS=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[][ [StackStatus ] ][]" --output text)
 
