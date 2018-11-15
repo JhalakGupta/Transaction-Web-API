@@ -4,16 +4,30 @@ package com.neu.controller;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.neu.pojo.TransactionDetails;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 
 import java.util.List;
 
 public class DeleteAttachmentS3BucketController {
+
+
+
+    @Value("${amazonProperties.bucketName}")
+    private String bucketN;
+
+    ObjectMetadata objectMetadata = new ObjectMetadata();
+
 
     public String deleteFile(TransactionDetails transactionDetail, String keyName){
 
@@ -23,22 +37,37 @@ public class DeleteAttachmentS3BucketController {
         /*Assigns Temporary credentials to IAM role
          * InstanceProfileCredentialsProvider : false does not refresh the credentials
          */
-        AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
+        System.out.println("IN delete method");
 
-        AmazonS3 s3Client = AmazonS3ClientBuilder
-                .standard()
-                .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                .build();
+        InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider
+                (true);
 
-        String bucketName=null;
+        AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withCredentials(provider).withRegion(Regions.US_EAST_1).build();
+
+
+//        AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
+//
+//        AmazonS3 s3Client = AmazonS3ClientBuilder
+//                .standard()
+//                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+//                .build();
+
+        System.out.println("IN delete after build");
+        /*InstanceProfileCredentialsProvider provider = new InstanceProfileCredentialsProvider
+                (true);
+
+        AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withCredentials(provider).withRegion(Regions.US_EAST_1).build();
+        System.out.println("InstanceProfileCreated");*/
+        String bucketName = null;
 
         List<Bucket> buckets = s3Client.listBuckets();
         for(Bucket bucket : buckets) {
             System.out.println(bucket.getName());
 
-            if(bucket.getName().contains("csye6225"))
+            if(bucket.getName().contains("csye6225") && !bucket.getName().contains("code-deploy") && !bucket.getName().contains("lambda"))
             {
                 bucketName=bucket.getName();
+                System.out.println("BUCKET FOUND");
                 break;
             }
 
@@ -58,7 +87,7 @@ public class DeleteAttachmentS3BucketController {
             System.out.println("Request ID:       " + ase.getRequestId());
             return null;
         } catch(Exception e) {
-            e.printStackTrace();
+            System.out.println("----------Stack Trace------\n" + e.getStackTrace());
             return null;
         }
     }

@@ -2,12 +2,18 @@ package com.neu.controller;
 
 
 
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.AmazonSNSClientBuilder;
+import com.amazonaws.services.sns.model.Topic;
 import com.neu.pojo.TransactionAttachments;
 import com.neu.pojo.TransactionDetails;
+import com.neu.pojo.User;
 import com.neu.pojo.UserDetails;
 import com.neu.repository.TransactionAttachmentsRepository;
 import com.neu.repository.TransactionRepository;
 import com.neu.repository.UserRepository;
+import com.timgroup.statsd.StatsDClient;
 import io.swagger.annotations.Api;
 import com.google.gson.JsonObject;
 
@@ -36,6 +42,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.neu.controller.LoginController.checkPassword;
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.AmazonSNSClientBuilder;
+import com.amazonaws.services.sns.model.*;
+import org.apache.commons.io.FilenameUtils;
 
 @RestController
 @RequestMapping("/")
@@ -58,12 +68,13 @@ public class TransactionController {
     @Autowired
     private Environment environment;
 
-
+    @Autowired
+    private StatsDClient statsDClient;
 
 
     @RequestMapping(value = "/transaction", method = RequestMethod.GET, produces = "application/json")
     public ResponseEntity list(Model model, HttpServletRequest request) {
-
+        statsDClient.incrementCounter("endpoint.transaction.http.get");
 
         String authHeader = request.getHeader("Authorization");
         ArrayList<TransactionDetails> transactionList = new ArrayList<>();
@@ -122,7 +133,7 @@ public class TransactionController {
     @RequestMapping(value = "/transaction", method = RequestMethod.POST)
     public ResponseEntity createTransaction(@RequestBody TransactionDetails transaction, HttpServletRequest request) {
         // productService.saveProduct(product);
-
+        statsDClient.incrementCounter("endpoint.transaction.http.post");
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null) {
             System.out.print("null header ");
@@ -179,6 +190,7 @@ public class TransactionController {
 
     @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
     public ResponseEntity delete(@PathVariable String id, HttpServletRequest request) {
+        statsDClient.incrementCounter("endpoint.transaction.http.delete");
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null) {
             System.out.print("null header ");
@@ -241,6 +253,7 @@ public class TransactionController {
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
     public ResponseEntity updateProduct(@PathVariable String id, @RequestBody TransactionDetails transaction, HttpServletRequest request) {
+        statsDClient.incrementCounter("endpoint.transaction.update.http.put");
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null) {
             System.out.print("null header ");
@@ -315,6 +328,7 @@ public class TransactionController {
 //        UUID uid = UUID.fromString(transactionId);
 //        TransactionDetails transactionDetail = transactionRepository.findTransactionDetailsByTransactionDetailsId(uid);
 //        List<TransactionAttachments> attachments = transactionAttachmentRepo.findByTransactionDetails(transactionDetail);
+        statsDClient.incrementCounter("endpoint.attachments.http.get");
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null) {
             System.out.print("You are not logged in ! ");
@@ -373,6 +387,7 @@ public class TransactionController {
     @ResponseBody
     public ResponseEntity<String> addAttachments(HttpServletRequest request, @PathVariable("id") String id,
                                                  @RequestParam("file") MultipartFile[] uploadfiles) {
+        statsDClient.incrementCounter("endpoint.attachments.http.post");
 
         JsonObject json = new JsonObject();
         UUID uid = UUID.fromString(id);
@@ -406,28 +421,36 @@ public class TransactionController {
                             String uploadedFileName = Arrays.stream(uploadfiles).map(x -> x.getOriginalFilename()).filter(x -> !StringUtils.isEmpty(x)).collect(Collectors.joining(" , "));
                             json.addProperty("message", "Saved the file(s)!");
                             try {
-
+                                boolean isValid = false;
                                 String keyValue = environment.getProperty("spring.profiles.active");
-                                System.out.println(keyValue);
+                                System.out.println("hi"+keyValue);
                                 //saveUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails);
-                                if(keyValue != null && keyValue.equals("dev")){
+                                if(keyValue != null && keyValue.equals("aws")){
                                     UploadAttachmentS3BucketController uploadToS3 = new UploadAttachmentS3BucketController();
                                     for (MultipartFile file : uploadfiles) {
-
-                                        String keyName = uploadToS3.uploadFileOnS3(transactionDetails, file);
-                                        if (keyName.equals(null)) {
-                                            json.addProperty("error", "An error occured while uploading files!!");
-                                            return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
+                                        System.out.println("Enter For Loop");
+                                        String ext = FilenameUtils.getExtension(file.getOriginalFilename());
+                                        System.out.println(ext);
+                                        if (ext.equalsIgnoreCase("png") ||
+                                                ext.equalsIgnoreCase("jpg")
+                                                || ext.equalsIgnoreCase("jpeg")) {
+                                            isValid = true;
+                                            String keyName = uploadToS3.uploadFileOnS3(transactionDetails, file);
+                                            if (keyName.equals(null)) {
+                                                json.addProperty("error", "An error occured while JJJJ uploading files!!");
+                                                return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
+                                            }
                                         }
                                     }
+                                    if(isValid) {
+                                        TransactionAttachments transactionAttachments = new TransactionAttachments();
+                                        transactionRepository.save(transactionDetails);
+                                        transactionAttachments.setFileName(uploadedFileName);
+                                        transactionAttachments.setTransactionDetails(transactionDetails);
+                                        transactionAttachmentRepo.save(transactionAttachments);
+                                    }
 
-                                    TransactionAttachments transactionAttachments = new TransactionAttachments();
-                                    transactionRepository.save(transactionDetails);
-                                    transactionAttachments.setFileName(uploadedFileName);
-                                    transactionAttachments.setTransactionDetails(transactionDetails);
-                                    transactionAttachmentRepo.save(transactionAttachments);
-
-                                }else if(keyValue != null && keyValue.equals("default")){
+                                }else if(keyValue != null && keyValue.equals("dev")){
                                     saveUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails);
                                 }
                                 else
@@ -439,6 +462,7 @@ public class TransactionController {
 
                                 return new ResponseEntity(json.toString(), HttpStatus.OK);
                             } catch (Exception exp) {
+                                System.out.println(exp);
                                 json.addProperty("error", "An error occured while uploading files!!");
                                 return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
                             }
@@ -459,10 +483,10 @@ public class TransactionController {
 
     private void deleteFileFromLocal(String fileName, String dir)
     {
-        // String workingDir = System.getProperty("user.dir");
-        // System.out.println("Current working directory : " + workingDir);
+       // String workingDir = System.getProperty("user.dir");
+       // System.out.println("Current working directory : " + workingDir);
 
-        //  String UPLOADED_FOLDER = workingDir+"/";
+      //  String UPLOADED_FOLDER = workingDir+"/";
 
 
         File file = new File(dir+"/" +fileName);
@@ -482,34 +506,43 @@ public class TransactionController {
                                      TransactionDetails transactionDetails,String attachmentid) throws IOException {
         //Save the uploaded file to this folder
         //String UPLOADED_FOLDER = "/home/jhalak/Documents/";
-        //  String UPLOADED_FOLDER = "/home/trialss/";
+      //  String UPLOADED_FOLDER = "/home/trialss/";
 
-        // String UPLOADED_FOLDER = "/Downloads/demo/assignment3Cloud/";
+       // String UPLOADED_FOLDER = "/Downloads/demo/assignment3Cloud/";
 
 
         String workingDir = System.getProperty("user.dir");
         System.out.println("Current working directory : " + workingDir);
 
         String UPLOADED_FOLDER = workingDir+"/"+ transactionDetails.getTransactionDetailsId()+"/";
-
+        boolean isValid = false;
         for (MultipartFile file : files) {
 
             if (file.isEmpty()) {
                 continue; //next pls
             }
+            String ext = FilenameUtils.getExtension(file.getOriginalFilename());
 
-            byte[] bytes = file.getBytes();
-            Path path = Paths.get(UPLOADED_FOLDER + file.getOriginalFilename());
-            Files.write(path, bytes);
 
+            if (ext.equalsIgnoreCase("png") ||
+                    ext.equalsIgnoreCase("jpg")
+                    || ext.equalsIgnoreCase("jpeg")) {
+
+                isValid = true;
+
+                byte[] bytes = file.getBytes();
+                Path path = Paths.get(UPLOADED_FOLDER + file.getOriginalFilename());
+                Files.write(path, bytes);
+
+            }
         }
-
-
-        TransactionAttachments transactionAttachments = transactionAttachmentRepo.findTransactionAttachmentsByTransactionAttachmentsId(Integer.parseInt(attachmentid));
-        transactionRepository.save(transactionDetails);
-        transactionAttachments.setFileName(uploadedFileName);
-        transactionAttachments.setTransactionDetails(transactionDetails);
-        transactionAttachmentRepo.save(transactionAttachments);
+        if(isValid) {
+            TransactionAttachments transactionAttachments = transactionAttachmentRepo.findTransactionAttachmentsByTransactionAttachmentsId(Integer.parseInt(attachmentid));
+            transactionRepository.save(transactionDetails);
+            transactionAttachments.setFileName(uploadedFileName);
+            transactionAttachments.setTransactionDetails(transactionDetails);
+            transactionAttachmentRepo.save(transactionAttachments);
+        }
     }
 
 
@@ -547,28 +580,38 @@ public class TransactionController {
             }
         }
 
-
+        boolean isValid = false;
 
         for (MultipartFile file : files) {
 
             if (file.isEmpty()) {
                 continue; //next pls
             }
+            String ext = FilenameUtils.getExtension(file.getOriginalFilename());
 
-            byte[] bytes = file.getBytes();
-            //Path path = Paths.get(UPLOADED_FOLDER + file.getOriginalFilename());
 
-            Path path = Paths.get(dir+"/" + file.getOriginalFilename());
-            Files.write(path, bytes);
+            if (ext.equalsIgnoreCase("png") ||
+                    ext.equalsIgnoreCase("jpg")
+                    || ext.equalsIgnoreCase("jpeg")) {
 
+                isValid = true;
+
+                byte[] bytes = file.getBytes();
+                //Path path = Paths.get(UPLOADED_FOLDER + file.getOriginalFilename());
+
+                Path path = Paths.get(dir + "/" + file.getOriginalFilename());
+                Files.write(path, bytes);
+
+            }
         }
+        if(isValid) {
 
-
-        TransactionAttachments transactionAttachments = new TransactionAttachments();
-        transactionRepository.save(transactionDetails);
-        transactionAttachments.setFileName(uploadedFileName);
-        transactionAttachments.setTransactionDetails(transactionDetails);
-        transactionAttachmentRepo.save(transactionAttachments);
+            TransactionAttachments transactionAttachments = new TransactionAttachments();
+            transactionRepository.save(transactionDetails);
+            transactionAttachments.setFileName(uploadedFileName);
+            transactionAttachments.setTransactionDetails(transactionDetails);
+            transactionAttachmentRepo.save(transactionAttachments);
+        }
     }
 
 
@@ -577,6 +620,7 @@ public class TransactionController {
     @ResponseBody
     public ResponseEntity<String> deleteAttachments (HttpServletRequest
                                                              request, @PathVariable("idAttachments") String attachmentid, @PathVariable("id") String id){
+        statsDClient.incrementCounter("endpoint.attachments.http.delete");
 
         JsonObject json = new JsonObject();
         DeleteAttachmentS3BucketController deleteFromS3 = new DeleteAttachmentS3BucketController();
@@ -634,12 +678,14 @@ public class TransactionController {
                                 String UPLOADED_FOLDER = workingDir + "/";
                                 String dir = UPLOADED_FOLDER + transactionDetails.getTransactionDetailsId();
                                 String keyValue = environment.getProperty("spring.profiles.active");
-                                if(keyValue != null && keyValue.equals("default")){
+                                if(keyValue != null && keyValue.equals("dev")){
                                     deleteFileFromLocal(ta.getFileName(), dir);
                                     transactionAttachmentRepo.deleteById(aid);
                                     transactionRepository.save(transactionDetails);
-                                }else if(keyValue != null && keyValue.equals("dev")){
+                                }else if(keyValue != null && keyValue.equals("aws")){
+                                    System.out.println("IN delete controller");
                                     String returnmsg = deleteFromS3.deleteFile(transactionDetails, ta.getFileName());
+
                                     if (returnmsg.equalsIgnoreCase("deleted")) {
                                         System.out.println("SUCCESSFULLY DELETED FROM S3!!!");
                                         transactionAttachmentRepo.deleteById(aid);
@@ -680,7 +726,7 @@ public class TransactionController {
                                                      @PathVariable("id") String id,
                                                      @RequestParam("file") MultipartFile[]uploadfiles){
 
-
+        statsDClient.incrementCounter("endpoint.attachments.http.put");
         JsonObject json = new JsonObject();
 
         UUID uid = UUID.fromString(id);
@@ -736,59 +782,73 @@ public class TransactionController {
 
                             try {
                                 String keyValue = environment.getProperty("spring.profiles.active");
-                                if(keyValue != null && keyValue.equals("default")) {
+                                System.out.println("The profile is:" + keyValue);
+                                boolean isValid = false;
+                                if (keyValue != null && keyValue.equals("dev")) {
                                     updateUploadedFiles(Arrays.asList(uploadfiles), uploadedFileName, transactionDetails, attachmentid);
 
-                                }else if(keyValue != null && keyValue.equals("dev")){
+                                } else if (keyValue != null && keyValue.equals("aws")) {
                                     UploadAttachmentS3BucketController uploadToS3 = new UploadAttachmentS3BucketController();
                                     for (MultipartFile file : uploadfiles) {
+                                        String ext = FilenameUtils.getExtension(file.getOriginalFilename());
+                                        System.out.println(ext);
+                                        if (ext.equalsIgnoreCase("png") ||
+                                                ext.equalsIgnoreCase("jpg")
+                                                || ext.equalsIgnoreCase("jpeg")) {
+                                            isValid = true;
 
-                                        String keyName = uploadToS3.uploadFileOnS3(transactionDetails, file);
-                                        if (keyName.equals(null)) {
-                                            json.addProperty("error", "An error occured while uploading files!!");
-                                            return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
+                                            String keyName = uploadToS3.uploadFileOnS3(transactionDetails, file);
+                                            if (keyName.equals(null)) {
+                                                json.addProperty("error", "An error occured while uploading files!!");
+                                                return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
+                                            }
                                         }
                                     }
-                                    TransactionAttachments transactionAttachments = transactionAttachmentRepo.findTransactionAttachmentsByTransactionAttachmentsId(Integer.parseInt(attachmentid));
-                                    transactionRepository.save(transactionDetails);
-                                    transactionAttachments.setFileName(uploadedFileName);
-                                    transactionAttachments.setTransactionDetails(transactionDetails);
-                                    transactionAttachmentRepo.save(transactionAttachments);
-                                }else{
+                                    if (isValid) {
+                                        TransactionAttachments transactionAttachments = transactionAttachmentRepo.findTransactionAttachmentsByTransactionAttachmentsId(Integer.parseInt(attachmentid));
+                                        transactionRepository.save(transactionDetails);
+                                        transactionAttachments.setFileName(uploadedFileName);
+                                        transactionAttachments.setTransactionDetails(transactionDetails);
+                                        transactionAttachmentRepo.save(transactionAttachments);
+                                    }
+                                } else {
                                     return new ResponseEntity("No profile set", HttpStatus.BAD_REQUEST);
                                 }
 
 
 
-                                try {
-                                    String workingDir = System.getProperty("user.dir");
-                                    System.out.println("Current working directory : " + workingDir);
+                                    try {
+                                        if (isValid) {
+                                            String workingDir = System.getProperty("user.dir");
+                                            System.out.println("Current working directory : " + workingDir);
 
-                                    String UPLOADED_FOLDER = workingDir + "/";
-                                    String dir = UPLOADED_FOLDER + transactionDetails.getTransactionDetailsId();
-                                    if(keyValue != null && keyValue.equals("default")) {
-                                        deleteFileFromLocal(oldfileName, dir);
-                                        transactionRepository.save(transactionDetails);
-                                    }else if(keyValue != null && keyValue.equals("dev")) {
-                                        String returnmsg = deleteFromS3.deleteFile(transactionDetails, oldfileName);
-                                        if (returnmsg.equalsIgnoreCase("deleted")) {
-                                            System.out.println("SUCCESSFULLY DELETED FROM S3!!!");
-                                            //  transactionAttachmentRepo.deleteById(aidold);
-                                            transactionRepository.save(transactionDetails);
+                                            String UPLOADED_FOLDER = workingDir + "/";
+                                            String dir = UPLOADED_FOLDER + transactionDetails.getTransactionDetailsId();
+                                            if (keyValue != null && keyValue.equals("dev")) {
+                                                deleteFileFromLocal(oldfileName, dir);
+                                                transactionRepository.save(transactionDetails);
+                                            } else if (keyValue != null && keyValue.equals("aws")) {
+                                                String returnmsg = deleteFromS3.deleteFile(transactionDetails, oldfileName);
+                                                if (returnmsg.equalsIgnoreCase("deleted")) {
+                                                    System.out.println("SUCCESSFULLY DELETED FROM S3!!!");
+                                                    //  transactionAttachmentRepo.deleteById(aidold);
+                                                    transactionRepository.save(transactionDetails);
+                                                }
+                                            } else {
+                                                return new ResponseEntity("No profile set", HttpStatus.BAD_REQUEST);
+                                            }
                                         }
-                                    }else{
-                                        return new ResponseEntity("No profile set", HttpStatus.BAD_REQUEST);
+                                    } catch (Exception e) {
+                                        System.out.println("" + e.getMessage());
                                     }
-                                } catch (Exception e) {
-                                    System.out.println("" + e.getMessage());
+
+
+                                    return new ResponseEntity(json.toString(), HttpStatus.OK);
+                                } catch(Exception exp){
+                                    json.addProperty("error", "An error occured while uploading files!!");
+                                    return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
                                 }
 
-
-                                return new ResponseEntity(json.toString(), HttpStatus.OK);
-                            } catch (Exception exp) {
-                                json.addProperty("error", "An error occured while uploading files!!");
-                                return new ResponseEntity(json.toString(), HttpStatus.BAD_REQUEST);
-                            }
                         } else {
                             return new ResponseEntity<>("You are not authorized to update !! ", HttpStatus.UNAUTHORIZED);
                         }
@@ -805,7 +865,36 @@ public class TransactionController {
 
         return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
+    @RequestMapping(value = "/user/resetPassword", method = RequestMethod.POST, produces = "application/json", consumes = "application/json")
+    @ResponseBody
+    public String resetPassword(@RequestBody UserDetails details,HttpServletRequest request) throws Exception{
+        statsDClient.incrementCounter("endpoint.user.resetPassword.http.post");
+        JsonObject json = new JsonObject();
 
+        UserDetails existingUser = userRepo.findUserDetailsByUsername(details.getUsername());
+
+        if(existingUser != null){
+            AmazonSNS snsClient = AmazonSNSClientBuilder.standard()
+                    .withCredentials(new InstanceProfileCredentialsProvider(false))
+                    .build();
+            List<Topic> topics =  snsClient.listTopics().getTopics();
+
+            for(Topic topic : topics){
+
+                if(topic.getTopicArn().endsWith("password_reset")){
+                    PublishRequest req = new PublishRequest(topic.getTopicArn(),details.getUsername());
+                    snsClient.publish(req);
+                    break;
+                }
+            }
+            json.addProperty("message","reset linked sent to your email address");
+        } else {
+
+            json.addProperty("message","username name doesn't exists");
+        }
+
+        return json.toString();
+    }
 
 
 }

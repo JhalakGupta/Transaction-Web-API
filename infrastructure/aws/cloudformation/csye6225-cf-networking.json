@@ -26,7 +26,10 @@
 		"IGName": {
 			"Type": "String"
 		},
-		"PubicRouteTableName": {
+		"PublicRouteTableName": {
+			"Type": "String"
+		},
+		"PrivateRouteTableName": {
 			"Type": "String"
 		}
 	},
@@ -179,7 +182,21 @@
 				"Tags": [{
 					"Key": "Name",
 					"Value": {
-						"Ref": "PubicRouteTableName"
+						"Ref": "PublicRouteTableName"
+					}
+				}]
+			}
+		},
+		"ourPrivateRouteTable": {
+			"Type": "AWS::EC2::RouteTable",
+			"Properties": {
+				"VpcId": {
+					"Ref": "ourVPC"
+				},
+				"Tags": [{
+					"Key": "Name",
+					"Value": {
+						"Ref": "PrivateRouteTableName"
 					}
 				}]
 			}
@@ -217,6 +234,39 @@
 				}
 			}
 		},
+		"ourSubnet4RouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "ourPrivateRouteTable"
+				},
+				"SubnetId": {
+					"Ref": "ourSubnet4"
+				}
+			}
+		},
+		"ourSubnet5RouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "ourPrivateRouteTable"
+				},
+				"SubnetId": {
+					"Ref": "ourSubnet5"
+				}
+			}
+		},
+		"ourSubnet6RouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "ourPrivateRouteTable"
+				},
+				"SubnetId": {
+					"Ref": "ourSubnet6"
+				}
+			}
+		},
 		"ourPublicRoute": {
 			"Type": "AWS::EC2::Route",
 			"Properties": {
@@ -250,7 +300,14 @@
 					"FromPort" : "443",
 					"ToPort" : "443",
 					"CidrIp" : "0.0.0.0/0"
-				} ]
+				},
+				{
+					"IpProtocol" : "tcp",
+					"FromPort" : "8080",
+					"ToPort" : "8080",
+					"CidrIp" : "0.0.0.0/0"
+				}
+			 ]
 			}
 		},
 		"DBEC2SecurityGroup": {
@@ -260,8 +317,8 @@
 				"GroupDescription": "Open database for access",
 				"SecurityGroupIngress" : [{
 					"IpProtocol" : "tcp",
-					"FromPort" : "3306",
-					"ToPort" : "3306",
+					"FromPort" : "5432",
+					"ToPort" : "5432",
 					"SourceSecurityGroupId" : { "Ref" : "WebServerSecurityGroup" }
 				}],
 				"VpcId": {"Ref":"ourVPC"}
