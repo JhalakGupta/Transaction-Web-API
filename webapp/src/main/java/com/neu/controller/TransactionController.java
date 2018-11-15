@@ -74,7 +74,7 @@ public class TransactionController {
 
     @RequestMapping(value = "/transaction", method = RequestMethod.GET, produces = "application/json")
     public ResponseEntity list(Model model, HttpServletRequest request) {
-
+        statsDClient.incrementCounter("endpoint.transaction.http.get");
 
         String authHeader = request.getHeader("Authorization");
         ArrayList<TransactionDetails> transactionList = new ArrayList<>();
@@ -190,6 +190,7 @@ public class TransactionController {
 
     @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
     public ResponseEntity delete(@PathVariable String id, HttpServletRequest request) {
+        statsDClient.incrementCounter("endpoint.transaction.http.delete");
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null) {
             System.out.print("null header ");
@@ -252,6 +253,7 @@ public class TransactionController {
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
     public ResponseEntity updateProduct(@PathVariable String id, @RequestBody TransactionDetails transaction, HttpServletRequest request) {
+        statsDClient.incrementCounter("endpoint.transaction.update.http.put");
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null) {
             System.out.print("null header ");
@@ -326,6 +328,7 @@ public class TransactionController {
 //        UUID uid = UUID.fromString(transactionId);
 //        TransactionDetails transactionDetail = transactionRepository.findTransactionDetailsByTransactionDetailsId(uid);
 //        List<TransactionAttachments> attachments = transactionAttachmentRepo.findByTransactionDetails(transactionDetail);
+        statsDClient.incrementCounter("endpoint.attachments.http.get");
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null) {
             System.out.print("You are not logged in ! ");
@@ -384,6 +387,7 @@ public class TransactionController {
     @ResponseBody
     public ResponseEntity<String> addAttachments(HttpServletRequest request, @PathVariable("id") String id,
                                                  @RequestParam("file") MultipartFile[] uploadfiles) {
+        statsDClient.incrementCounter("endpoint.attachments.http.post");
 
         JsonObject json = new JsonObject();
         UUID uid = UUID.fromString(id);
@@ -616,6 +620,7 @@ public class TransactionController {
     @ResponseBody
     public ResponseEntity<String> deleteAttachments (HttpServletRequest
                                                              request, @PathVariable("idAttachments") String attachmentid, @PathVariable("id") String id){
+        statsDClient.incrementCounter("endpoint.attachments.http.delete");
 
         JsonObject json = new JsonObject();
         DeleteAttachmentS3BucketController deleteFromS3 = new DeleteAttachmentS3BucketController();
@@ -721,7 +726,7 @@ public class TransactionController {
                                                      @PathVariable("id") String id,
                                                      @RequestParam("file") MultipartFile[]uploadfiles){
 
-
+        statsDClient.incrementCounter("endpoint.attachments.http.put");
         JsonObject json = new JsonObject();
 
         UUID uid = UUID.fromString(id);
@@ -863,7 +868,7 @@ public class TransactionController {
     @RequestMapping(value = "/user/resetPassword", method = RequestMethod.POST, produces = "application/json", consumes = "application/json")
     @ResponseBody
     public String resetPassword(@RequestBody UserDetails details,HttpServletRequest request) throws Exception{
-
+        statsDClient.incrementCounter("endpoint.user.resetPassword.http.post");
         JsonObject json = new JsonObject();
 
         UserDetails existingUser = userRepo.findUserDetailsByUsername(details.getUsername());
