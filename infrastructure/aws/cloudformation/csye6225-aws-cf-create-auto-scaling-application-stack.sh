@@ -20,6 +20,7 @@ DESIRED_CAPACITY=3
 LAUNCH_CONFIGURATION_NAME="asg_launch_config"
 EC2_TYPE="t2.micro"
 ASSOCIATE_PUBLIC_IPADDRESS="true"
+CODEDEPLOYAPPLICATIONNAME="CodeDeployApplication"
 
 DOMAINNAME=$(aws route53 list-hosted-zones --query HostedZones[0].Name --output text)
 DNS_NAME=${DOMAINNAME::-1}
@@ -89,6 +90,7 @@ aws cloudformation create-stack --stack-name $STACK_NAME \
  ParameterKey=CertificateArn,ParameterValue=$certificate_ARN \
  ParameterKey=CodeDeployServiceRoleArn,ParameterValue=$codeDeployServiceRoleArn \
  ParameterKey=DNS,ParameterValue=$DNS_NAME \
+ ParameterKey=CodeDeployApplicationName,ParameterValue=$CODEDEPLOYAPPLICATIONNAME \
 
 export STACK_STATUS=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[][ [StackStatus ] ][]" --output text)
 
