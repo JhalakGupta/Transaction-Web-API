@@ -1,6 +1,7 @@
 STACK_NAME=$1
+NUID=$2
 EC2_NAME=${STACK_NAME}-csye6225-ec2
-BUCKET_NAME="sawhneyri.me.csye6225.com"
+BUCKET_NAME="$NUID.me.csye6225.com"
 
 export ec2InstanceId=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].[InstanceId, State.Name, Tags[*][?Value==`${EC2_NAME}`]]' --output text|grep running|awk '{print $1}')
 

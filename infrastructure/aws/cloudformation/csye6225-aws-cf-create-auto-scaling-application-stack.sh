@@ -1,6 +1,5 @@
 STACK_NAME=$1
 VPC_NAME="${STACK_NAME}-csye6225-vpc"
-NUID=$2
 EC2_NAME="ec2"
 EC2VOL_SIZE="20"
 EC2VOL_TYPE="gp2"
@@ -12,9 +11,25 @@ DB_NAME="csye6225"
 DB_INSTANCE_CLASS="db.t2.medium"
 DB_INSTANCE_IDENTIFIER="csye6225-fall2018"
 DB_ENGINE="postgres"
-BUCKET_NAME="$NUID.me.csye6225.com"
 EC2_KEY="csye6225"
 SNSTOPICNAME="password_reset"
+COOLDOWN=60
+MIN_SIZE=3
+MAX_SIZE=10
+DESIRED_CAPACITY=3
+LAUNCH_CONFIGURATION_NAME="asg_launch_config"
+EC2_TYPE="t2.micro"
+ASSOCIATE_PUBLIC_IPADDRESS="true"
+CODEDEPLOYAPPLICATIONNAME="CodeDeployApplication"
+
+DOMAINNAME=$(aws route53 list-hosted-zones --query HostedZones[0].Name --output text)
+DNS_NAME=${DOMAINNAME::-1}
+echo $DNS_NAME
+DNS=${DOMAINNAME#csye6225-fall2018-}
+echo $DNS
+
+BUCKET_NAME="${DNS}csye6225.com"
+echo $BUCKET_NAME
 
 export vpcId=$(aws ec2 describe-vpcs --query "Vpcs[*].[CidrBlock, VpcId]" --output text|grep 10.0.0.0/16|awk '{print $2}')
 echo "VpcId : ${vpcId}"
@@ -32,10 +47,17 @@ export eC2RoleName=$(aws iam list-roles --query 'Roles[*].[RoleName]' --output t
 echo "eC2RoleName : ${eC2RoleName}"
 export snsTopicArn=$(aws sns list-topics --output text|grep ${SNSTOPICNAME}|awk '{print $2}')
 echo "snsTopicArn : ${snsTopicArn}"
+export lambdaRoleArn=$(aws iam list-roles --query 'Roles[*].[RoleName,Arn]' --output text|grep Lambda|awk '{print $2}')
+echo "lambdaRoleArn : ${lambdaRoleArn}"
+export certificate_ARN=$(aws acm list-certificates --query CertificateSummaryList[0].CertificateArn --output text)
+echo "certificateArn : ${certificate_ARN}"
+export codeDeployServiceRoleArn=$(aws iam get-role --role-name CodeDeploySerivceRole --query "Role.Arn" --output text)
+echo "codeDeployServiceRoleArn  : ${codeDeployServiceRoleArn}"
+#$(aws s3api get-object --bucket lambda.csye6225-fall2018-sawhneyri.me --key cloudwatch-config.json cloudwatch-config.json)
 
 aws cloudformation create-stack --stack-name $STACK_NAME \
  --capabilities "CAPABILITY_NAMED_IAM" \
- --template-body file://csye6225-cf-application.json \
+ --template-body file://csye6225-cf-auto-scaling-application.json \
  --parameters ParameterKey=VpcId,ParameterValue=$vpcId \
  ParameterKey=EC2Name,ParameterValue=$EC2_NAME \
  ParameterKey=EC2SecurityGroup,ParameterValue=$eC2SecurityGroupId \
@@ -56,7 +78,19 @@ aws cloudformation create-stack --stack-name $STACK_NAME \
  ParameterKey=BucketName,ParameterValue=$BUCKET_NAME \
  ParameterKey=EC2RoleName,ParameterValue=$eC2RoleName \
  ParameterKey=EC2Key,ParameterValue=$EC2_KEY \
- ParameterKey=SNSTopicArn,ParameterValue=$snsTopicArn
+ ParameterKey=SNSTopicArn,ParameterValue=$snsTopicArn \
+ ParameterKey=LambdaRoleArn,ParameterValue=$lambdaRoleArn \
+ ParameterKey=AssociatePublicIpAddress,ParameterValue=$ASSOCIATE_PUBLIC_IPADDRESS \
+ ParameterKey=Cooldown,ParameterValue=$COOLDOWN \
+ ParameterKey=MinSize,ParameterValue=$MIN_SIZE \
+ ParameterKey=MaxSize,ParameterValue=$MAX_SIZE \
+ ParameterKey=DesiredCapacity,ParameterValue=$DESIRED_CAPACITY \
+ ParameterKey=LaunchConfigurationName,ParameterValue=$LAUNCH_CONFIGURATION_NAME \
+ ParameterKey=EC2InstanceType,ParameterValue=$EC2_TYPE \
+ ParameterKey=CertificateArn,ParameterValue=$certificate_ARN \
+ ParameterKey=CodeDeployServiceRoleArn,ParameterValue=$codeDeployServiceRoleArn \
+ ParameterKey=DNS,ParameterValue=$DNS_NAME \
+ ParameterKey=CodeDeployApplicationName,ParameterValue=$CODEDEPLOYAPPLICATIONNAME \
 
 export STACK_STATUS=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[][ [StackStatus ] ][]" --output text)
 

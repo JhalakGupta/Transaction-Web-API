@@ -1,6 +1,7 @@
 STACK_NAME=$1
-CODEDEPLOYS3BUCKETNAME="code-deploy.murthyva.me.csye6225.com"
-LAMBDAS3BUCKETNAME="lambda.csye6225-fall2018-murthyva.me"
+NUID=$2
+CODEDEPLOYS3BUCKETNAME="code-deploy.$NUID.me.csye6225.com"
+LAMBDAS3BUCKETNAME="lambda.csye6225-fall2018-$NUID.me"
 
 aws s3 rm s3://$CODEDEPLOYS3BUCKETNAME --recursive
 echo "Cleaning s3 bucket $CODEDEPLOYS3BUCKETNAME"
