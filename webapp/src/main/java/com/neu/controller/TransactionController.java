@@ -162,7 +162,8 @@ public class TransactionController {
 
                     transaction.setUsername(username);
                     transactionRepository.save(transaction);
-                    return new ResponseEntity<>("Transaction saved successfully", HttpStatus.CREATED);
+                   // return new ResponseEntity<>("Transaction saved successfully", HttpStatus.CREATED);
+                    return new ResponseEntity<>(transaction, HttpStatus.CREATED);
 
                 }
             } else {
