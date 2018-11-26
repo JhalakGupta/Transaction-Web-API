@@ -1,15 +1,15 @@
 STACK_NAME=$1
-
+NUID=$2
 CODEDEPLOYEC2S3POLICYNAME="CodeDeploy-EC2-S3"
 CODEDEPLOYSERVICEROLENAME="CodeDeploySerivceRole"
-CODEDEPLOYS3BUCKETNAME="code-deploy.guptaj.me.csye6225.com"
-LAMBDAS3BUCKETNAME="lambda.csye6225-fall2018-guptaj.me"
+CODEDEPLOYS3BUCKETNAME="code-deploy.$NUID.me.csye6225.com"
+LAMBDAS3BUCKETNAME="lambda.csye6225-fall2018-$NUID.me"
 TRAVISUSER="travis"
 TRAVISUPLOADTOS3POLICYNAME="Travis-Upload-To-S3"
 TRAVISCODEDEPLOYPOLICYNAME="Travis-Code-Deploy"
 CODEDEPLOYEC2SERVICEROLENAME="CodeDeployEC2ServiceRole"
 EC2NAME="ec2"
-BUCKET_NAME="guptaj.me.csye6225.com"
+BUCKET_NAME="$NUID.me.csye6225.com"
 SNSPOLICY="SNS-Policy"
 
 aws cloudformation create-stack --stack-name $STACK_NAME --capabilities "CAPABILITY_NAMED_IAM" \

@@ -1,6 +1,8 @@
 STACK_NAME=$1
-LAMBDAS3BUCKET="lambda.csye6225-fall2018-guptaj.me"
 DomainName=$2
+NUID=$3
+LAMBDAS3BUCKET="lambda.csye6225-fall2018-$NUID.me"
+
 
 export lambdaRoleArn=$(aws iam list-roles --query 'Roles[*].[RoleName, Arn]' --output text | grep Lambda |awk '{print $2}')
 echo "lambdaRoleArn : ${lambdaRoleArn}"

@@ -1,5 +1,6 @@
 STACK_NAME=$1
 VPC_NAME="${STACK_NAME}-csye6225-vpc"
+NUID=$2
 EC2_NAME="ec2"
 EC2VOL_SIZE="20"
 EC2VOL_TYPE="gp2"
@@ -11,7 +12,7 @@ DB_NAME="csye6225"
 DB_INSTANCE_CLASS="db.t2.medium"
 DB_INSTANCE_IDENTIFIER="csye6225-fall2018"
 DB_ENGINE="postgres"
-BUCKET_NAME="murthyva.me.csye6225.com"
+BUCKET_NAME="$NUID.me.csye6225.com"
 EC2_KEY="csye6225"
 SNSTOPICNAME="password_reset"
 
