@@ -7,6 +7,9 @@
       },
       "LambdaS3Bucket":{
          "Type":"String"
+      },
+        "domainName":{
+         "Type":"String"
       }
    },
    "Resources":{
@@ -41,6 +44,11 @@
                },
                "S3Key":"LogEvent-1.0-SNAPSHOT.zip"
             },
+            "Environment":{
+       "Variables":{
+         "domainName" : {"Ref": "domainName"}
+       }
+       },
             "Runtime":"java8",
             "Timeout":25
          }
