@@ -711,6 +711,11 @@
               ]
            ]
         }
-     }
+     },
+     "LoadBalancerArn": {
+      "Description": "LoadBalancer Arn",
+      "Value": { "Ref": "ourLoadBalancer"},
+      "Export" : { "Name" : "LoadBalancerArn" }
+    }
   }
 }
