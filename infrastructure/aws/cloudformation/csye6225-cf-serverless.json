@@ -1,0 +1,73 @@
+{
+   "AWSTemplateFormatVersion":"2010-09-09",
+   "Description":"Cloud Formation Template - CSYE6225 - Creating Lambda serverless stack",
+   "Parameters":{
+      "LambdaRoleArn":{
+         "Type":"String"
+      },
+      "LambdaS3Bucket":{
+         "Type":"String"
+      },
+        "domainName":{
+         "Type":"String"
+      }
+   },
+   "Resources":{
+      "ourSNSTopic":{
+         "Type":"AWS::SNS::Topic",
+         "Properties":{
+            "TopicName":"password_reset",
+            "Subscription": [ {
+               "Endpoint":{
+               "Fn::GetAtt": [
+                  "ourLambdaFunction",
+                  "Arn"
+               ]
+            },
+            "Protocol": "lambda"
+         } ]
+         },
+         "DependsOn":"ourLambdaFunction"
+      },
+      "ourLambdaFunction":{
+         "Type":"AWS::Lambda::Function",
+         "Properties":{
+            "FunctionName":"MyLambdaFunction",
+            "Handler":"LogEvent",
+            "MemorySize":512,
+            "Role":{
+               "Ref":"LambdaRoleArn"
+            },
+            "Code":{
+               "S3Bucket":{
+                  "Ref":"LambdaS3Bucket"
+               },
+               "S3Key":"LogEvent-1.0-SNAPSHOT.zip"
+            },
+            "Environment":{
+       "Variables":{
+         "domainName" : {"Ref": "domainName"}
+       }
+       },
+            "Runtime":"java8",
+            "Timeout":25
+         }
+      },
+      "ourLambdaResourcePolicy":{
+         "Properties":{
+            "FunctionName":{
+               "Fn::GetAtt": [
+                  "ourLambdaFunction",
+                  "Arn"
+               ]
+            },
+            "Principal":"sns.amazonaws.com",
+            "Action":"lambda:InvokeFunction",
+            "SourceArn": {
+               "Ref":"ourSNSTopic"
+            }
+         },
+        "Type":"AWS::Lambda::Permission"
+      }
+   }
+}

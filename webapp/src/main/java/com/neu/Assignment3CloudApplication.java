@@ -28,11 +28,15 @@ public class Assignment3CloudApplication  {
         return application.sources(Assignment3CloudApplication.class).properties(getRemoteConnection());
     }*/
 
+public class Assignment3CloudApplication extends SpringBootServletInitializer{
+
+
 
     public static void main(String[] args)
     {
 
         SpringApplication.run(Assignment3CloudApplication.class, args);
+        System.out.println("jhalak");
     }
 
 
